@@ -5,6 +5,7 @@ import { useRestaurantStore } from '../stores/restaurantStore';
 import { useAppStore } from '../stores/appStore';
 import { useRestaurant } from '../hooks/useRestaurant';
 import AdminLayout from '../components/features/AdminLayout';
+import ProductManager from '../components/features/ProductManager';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,7 +13,6 @@ const AdminPage: React.FC = () => {
   const { currentRestaurant } = useRestaurantStore();
   const { activeAdminTab, setActiveAdminTab } = useAppStore();
   
-  // ✅ CORREÇÃO: Chamar o hook useRestaurant para carregar os dados
   useRestaurant();
 
   const handleLogout = async () => {
@@ -39,10 +39,21 @@ const AdminPage: React.FC = () => {
       onTabChange={setActiveAdminTab}
       onLogout={handleLogout}
     >
-      <div className="p-4">
-        <h2 className="text-2xl font-bold mb-4">Painel Administrativo</h2>
-        <p>Conteúdo do painel</p>
-      </div>
+      {activeAdminTab === 'menu' && <ProductManager />}
+      
+      {activeAdminTab === 'inventory' && (
+        <div className="p-4">
+          <h2 className="text-2xl font-bold mb-4">Categorias</h2>
+          <p className="text-gray-600">Em construção...</p>
+        </div>
+      )}
+      
+      {activeAdminTab === 'settings' && (
+        <div className="p-4">
+          <h2 className="text-2xl font-bold mb-4">Configurações</h2>
+          <p className="text-gray-600">Em construção...</p>
+        </div>
+      )}
     </AdminLayout>
   );
 };
