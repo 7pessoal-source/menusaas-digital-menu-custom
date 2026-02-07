@@ -6,6 +6,8 @@ import { useAppStore } from '../stores/appStore';
 import { useRestaurant } from '../hooks/useRestaurant';
 import AdminLayout from '../components/features/AdminLayout';
 import ProductManager from '../components/features/ProductManager';
+import CategoryManager from '../components/features/CategoryManager';
+import RestaurantSettings from '../components/features/RestaurantSettings';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
@@ -40,20 +42,8 @@ const AdminPage: React.FC = () => {
       onLogout={handleLogout}
     >
       {activeAdminTab === 'menu' && <ProductManager />}
-      
-      {activeAdminTab === 'inventory' && (
-        <div className="p-4">
-          <h2 className="text-2xl font-bold mb-4">Categorias</h2>
-          <p className="text-gray-600">Em construção...</p>
-        </div>
-      )}
-      
-      {activeAdminTab === 'settings' && (
-        <div className="p-4">
-          <h2 className="text-2xl font-bold mb-4">Configurações</h2>
-          <p className="text-gray-600">Em construção...</p>
-        </div>
-      )}
+      {activeAdminTab === 'inventory' && <CategoryManager />}
+      {activeAdminTab === 'settings' && <RestaurantSettings />}
     </AdminLayout>
   );
 };
