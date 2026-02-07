@@ -12,10 +12,10 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '../stores/authStore';
-import { useRestaurantStore } from '../stores/restaurantStore';
-import { useAppStore } from '../stores/appStore';
-import { supabase } from '../services/supabase';
+import { useAuthStore } from '../../stores/authStore';
+import { useRestaurantStore } from '../../stores/restaurantStore';
+import { useAppStore } from '../../stores/appStore';
+import { supabase } from '../../services/supabase';
 
 const DebugPanel: React.FC = () => {
   const { session, user } = useAuthStore();
