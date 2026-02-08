@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRestaurantStore } from '../../stores/restaurantStore';
 import { useRestaurant } from '../../hooks/useRestaurant';
 import { Restaurant } from '../../types';
@@ -35,6 +35,27 @@ const RestaurantSettings: React.FC = () => {
   });
 
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // 🔥 Sincronizar formData quando currentRestaurant mudar
+  useEffect(() => {
+    if (currentRestaurant) {
+      setFormData({
+        name: currentRestaurant.name || '',
+        slug: currentRestaurant.slug || '',
+        description: currentRestaurant.description || '',
+        logo: currentRestaurant.logo || '',
+        primary_color: currentRestaurant.primary_color || '#FBBF24',
+        secondary_color: currentRestaurant.secondary_color || '#000000',
+        whatsapp: currentRestaurant.whatsapp || '',
+        contact_phone: currentRestaurant.contact_phone || '',
+        contact_email: currentRestaurant.contact_email || '',
+        address: currentRestaurant.address || '',
+        isOpen: currentRestaurant.isOpen ?? true,
+        allows_delivery: currentRestaurant.allows_delivery ?? true,
+        min_order_value: currentRestaurant.min_order_value || 0,
+      });
+    }
+  }, [currentRestaurant]);
 
   const handleCopyLink = () => {
     const url = `${window.location.origin}/menu/${currentRestaurant?.slug}`;

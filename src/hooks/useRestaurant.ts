@@ -156,8 +156,8 @@ export const useRestaurant = () => {
     setLoading(true);
     
     try {
-      // Remove campos auto-gerados
-      const { created_at, user_id, ...cleanUpdates } = updates as any;
+      // Remove campos auto-gerados e readonly
+      const { created_at, updated_at, user_id, id, ...cleanUpdates } = updates as any;
       
       console.log('🔵 [UPDATE] Clean updates:', cleanUpdates);
       
