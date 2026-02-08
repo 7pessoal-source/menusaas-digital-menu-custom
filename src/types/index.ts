@@ -16,7 +16,6 @@ export interface Restaurant {
   allows_delivery: boolean;
   user_id?: string;
   created_at?: string;
-  updated_at?: string;
 }
 
 export interface Category {
@@ -25,7 +24,6 @@ export interface Category {
   name: string;
   order: number;
   created_at?: string;
-  updated_at?: string;
 }
 
 export interface Product {
@@ -39,7 +37,6 @@ export interface Product {
   is_available: boolean;
   is_promotion?: boolean;
   created_at?: string;
-  updated_at?: string;
 }
 
 export interface OrderItem {
