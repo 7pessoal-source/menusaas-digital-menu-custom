@@ -71,14 +71,36 @@ const RestaurantSettings: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 🔥 VALIDAÇÃO: Campos obrigatórios
+    if (!formData.name?.trim()) {
+      alert('❌ Nome do restaurante é obrigatório');
+      return;
+    }
+    
+    if (!formData.slug?.trim()) {
+      alert('❌ Slug (URL) é obrigatório');
+      return;
+    }
+    
+    // 🔥 VALIDAÇÃO: Slug sem espaços ou caracteres especiais
+    const slugRegex = /^[a-z0-9-]+$/;
+    if (!slugRegex.test(formData.slug)) {
+      alert('❌ Slug deve conter apenas letras minúsculas, números e hífens (ex: meu-restaurante)');
+      return;
+    }
+
+    console.log('🔵 [FORM SUBMIT] Submitting data:', formData);
     setLoading(true);
 
     const result = await updateRestaurant(formData);
 
     if (result?.success) {
-      alert('Configurações salvas com sucesso!');
+      console.log('✅ [FORM SUBMIT] Success!');
+      alert('✅ Configurações salvas com sucesso!');
     } else {
-      alert('Erro ao salvar configurações');
+      console.error('❌ [FORM SUBMIT] Error:', result?.error);
+      alert(`❌ Erro ao salvar: ${result?.error || 'Erro desconhecido'}`);
     }
 
     setLoading(false);
@@ -187,10 +209,25 @@ const RestaurantSettings: React.FC = () => {
               <input
                 type="text"
                 required
+                pattern="[a-z0-9-]+"
                 className="mt-1 w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-amber-400"
                 value={formData.slug || ''}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                onChange={(e) => {
+                  // 🔥 AUTO-FORMAT: Converter para minúsculas e remover caracteres inválidos
+                  const cleanSlug = e.target.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9-]/g, '-')
+                    .replace(/-+/g, '-');
+                  setFormData({ ...formData, slug: cleanSlug });
+                }}
+                placeholder="meu-restaurante"
               />
+              <p className="text-[10px] text-gray-400 mt-1 ml-1">
+                💡 Apenas letras minúsculas, números e hífens. Ex: pizzaria-do-ze
+              </p>
+              <p className="text-[10px] text-green-600 mt-1 ml-1 font-bold">
+                🔗 Seu link: {window.location.origin}/menu/{formData.slug || 'seu-slug'}
+              </p>
             </label>
 
             <label className="block md:col-span-2">

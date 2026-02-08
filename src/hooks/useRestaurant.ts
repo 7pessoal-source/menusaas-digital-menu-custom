@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useRestaurantStore } from '../stores/restaurantStore';
 import { useAuthStore } from '../stores/authStore';
 import { useAppStore } from '../stores/appStore';
@@ -19,51 +19,14 @@ export const useRestaurant = () => {
     setProducts,
   } = useRestaurantStore();
 
-  useEffect(() => {
-    fetchRestaurants();
-  }, []);
+  // 🔥 FIX: useRef para evitar re-fetch desnecessário após update
+  const isInitialMount = useRef(true);
+  const currentRestaurantIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (session && restaurants.length > 0) {
-      const userRestaurant = restaurants.find(
-        (r) => (r as any).user_id === session.user.id
-      );
-      
-      if (userRestaurant) {
-        setCurrentRestaurant(userRestaurant);
-      } else if (restaurants[0]) {
-        setCurrentRestaurant(restaurants[0]);
-      } else {
-        setCurrentRestaurant(null as any);
-      }
-    }
-  }, [session, restaurants]);
-
-  useEffect(() => {
-    if (currentRestaurant) {
-      fetchRestaurantData(currentRestaurant.id);
-    }
-  }, [currentRestaurant]);
-
-  const fetchRestaurants = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('restaurants')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      if (data) setRestaurants(data as Restaurant[]);
-    } catch (error: any) {
-      console.error('Fetch restaurants error:', error);
-      setError('Falha ao carregar restaurantes.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchRestaurantData = async (restaurantId: string) => {
+  // 🔥 FIX: Memoizar fetchRestaurantData para evitar recriação
+  const fetchRestaurantData = useCallback(async (restaurantId: string) => {
+    console.log('🔵 [FETCH DATA] Loading data for restaurant:', restaurantId);
+    
     try {
       const [categoriesResult, productsResult] = await Promise.all([
         supabase
@@ -78,24 +41,125 @@ export const useRestaurant = () => {
           .order('created_at', { ascending: false }),
       ]);
 
-      if (categoriesResult.error) throw categoriesResult.error;
-      if (productsResult.error) throw productsResult.error;
+      if (categoriesResult.error) {
+        console.error('❌ [FETCH DATA] Categories error:', categoriesResult.error);
+        throw categoriesResult.error;
+      }
+      if (productsResult.error) {
+        console.error('❌ [FETCH DATA] Products error:', productsResult.error);
+        throw productsResult.error;
+      }
+
+      console.log('✅ [FETCH DATA] Success:', {
+        categories: categoriesResult.data?.length || 0,
+        products: productsResult.data?.length || 0
+      });
 
       setCategories(categoriesResult.data as Category[] || []);
       setProducts(productsResult.data as Product[] || []);
     } catch (error: any) {
-      console.error('Fetch restaurant data error:', error);
+      console.error('❌ [FETCH DATA] Error:', error);
       setError('Falha ao carregar dados do restaurante.');
     }
-  };
+  }, [setCategories, setProducts, setError]);
 
+  // 🔥 FIX: Carregar restaurantes apenas uma vez na montagem
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      console.log('🔵 [FETCH RESTAURANTS] Loading all restaurants...');
+      setLoading(true);
+      
+      try {
+        const { data, error } = await supabase
+          .from('restaurants')
+          .select('*')
+          .order('name');
+        
+        if (error) {
+          console.error('❌ [FETCH RESTAURANTS] Error:', error);
+          throw error;
+        }
+        
+        console.log('✅ [FETCH RESTAURANTS] Success:', data?.length || 0, 'restaurants found');
+        
+        if (data) {
+          setRestaurants(data as Restaurant[]);
+        }
+      } catch (error: any) {
+        console.error('❌ [FETCH RESTAURANTS] Error:', error);
+        setError('Falha ao carregar restaurantes.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Apenas na primeira montagem
+    if (isInitialMount.current) {
+      fetchRestaurants();
+      isInitialMount.current = false;
+    }
+  }, [setLoading, setError, setRestaurants]);
+
+  // 🔥 FIX: Definir currentRestaurant baseado em session (apenas quando necessário)
+  useEffect(() => {
+    if (!session || restaurants.length === 0) {
+      console.log('⚠️ [SET CURRENT] Skipping - no session or no restaurants');
+      return;
+    }
+
+    console.log('🔵 [SET CURRENT] Finding restaurant for user:', session.user.id);
+    
+    const userRestaurant = restaurants.find(
+      (r) => (r as any).user_id === session.user.id
+    );
+    
+    if (userRestaurant) {
+      console.log('✅ [SET CURRENT] Found user restaurant:', userRestaurant.name);
+      setCurrentRestaurant(userRestaurant);
+    } else if (restaurants[0]) {
+      console.log('⚠️ [SET CURRENT] User restaurant not found, using first:', restaurants[0].name);
+      setCurrentRestaurant(restaurants[0]);
+    } else {
+      console.log('❌ [SET CURRENT] No restaurants available');
+      setCurrentRestaurant(null as any);
+    }
+  }, [session, restaurants, setCurrentRestaurant]);
+
+  // 🔥 FIX: Buscar dados apenas quando currentRestaurant mudar DE VERDADE
+  useEffect(() => {
+    if (!currentRestaurant) {
+      console.log('⚠️ [LOAD DATA] No current restaurant');
+      return;
+    }
+
+    // Evita re-fetch se o ID não mudou (ex: após update)
+    if (currentRestaurantIdRef.current === currentRestaurant.id) {
+      console.log('⚠️ [LOAD DATA] Same restaurant, skipping fetch');
+      return;
+    }
+
+    console.log('🔵 [LOAD DATA] Current restaurant changed to:', currentRestaurant.name);
+    currentRestaurantIdRef.current = currentRestaurant.id;
+    fetchRestaurantData(currentRestaurant.id);
+  }, [currentRestaurant, fetchRestaurantData]);
+
+  // 🔥 FIX: updateRestaurant com sincronização ATÔMICA de estado
   const updateRestaurant = async (updates: Partial<Restaurant>) => {
-    if (!currentRestaurant) return;
+    if (!currentRestaurant) {
+      console.error('❌ [UPDATE] No current restaurant defined');
+      return { success: false, error: 'Nenhum restaurante selecionado' };
+    }
+
+    console.log('🔵 [UPDATE] Starting update for:', currentRestaurant.name);
+    console.log('🔵 [UPDATE] Updates:', updates);
 
     setLoading(true);
+    
     try {
-      // Remove apenas created_at que é auto-gerado
-      const { created_at, ...cleanUpdates } = updates as any;
+      // Remove campos auto-gerados
+      const { created_at, user_id, ...cleanUpdates } = updates as any;
+      
+      console.log('🔵 [UPDATE] Clean updates:', cleanUpdates);
       
       const { data, error } = await supabase
         .from('restaurants')
@@ -104,25 +168,50 @@ export const useRestaurant = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [UPDATE] Supabase error:', error);
+        throw error;
+      }
+
+      if (!data) {
+        console.error('❌ [UPDATE] No data returned from Supabase');
+        throw new Error('Nenhum dado retornado do servidor');
+      }
+
+      console.log('✅ [UPDATE] Success! New data:', data);
+      
+      // 🔥 CRÍTICO: Atualizar estado local IMEDIATAMENTE
       setCurrentRestaurant(data as Restaurant);
+      
+      // 🔥 CRÍTICO: Atualizar também na lista de restaurantes
+      setRestaurants(
+        restaurants.map(r => r.id === data.id ? data as Restaurant : r)
+      );
+      
       return { success: true, data };
     } catch (error: any) {
-      console.error('Update restaurant error:', error);
-      setError(error.message);
-      return { success: false, error: error.message };
+      console.error('❌ [UPDATE] Error:', error);
+      setError(error.message || 'Erro ao atualizar restaurante');
+      return { success: false, error: error.message || 'Erro desconhecido' };
     } finally {
       setLoading(false);
     }
   };
+
+  // 🔥 FIX: Adicionar função de refresh manual (útil após updates)
+  const refreshRestaurantData = useCallback(async () => {
+    if (!currentRestaurant) return;
+    
+    console.log('🔄 [REFRESH] Manually refreshing restaurant data...');
+    await fetchRestaurantData(currentRestaurant.id);
+  }, [currentRestaurant, fetchRestaurantData]);
 
   return {
     restaurants,
     currentRestaurant,
     categories,
     products,
-    fetchRestaurants,
-    fetchRestaurantData,
     updateRestaurant,
+    refreshRestaurantData, // 🔥 NOVO: permite refresh manual
   };
 };
