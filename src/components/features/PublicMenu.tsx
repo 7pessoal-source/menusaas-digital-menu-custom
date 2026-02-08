@@ -251,8 +251,8 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
           </div>
         </div>
 
-        {/* Categorias com scroll horizontal suave */}
-        <div className="overflow-x-auto scrollbar-hide px-6 pb-4">
+        {/* Categorias scrolláveis */}
+        <div className="px-6 pb-4 overflow-x-auto scrollbar-hide">
           <div className="flex space-x-3 min-w-max">
             {menuCategories.map((cat) => (
               <button
@@ -271,8 +271,8 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
         </div>
       </div>
 
-      {/* Lista de produtos com animações */}
-      <div className="px-6 py-6 space-y-4 max-w-2xl mx-auto">
+      {/* Lista de produtos em GRID de 4 colunas com efeito flutuante */}
+      <div className="px-6 py-8 max-w-7xl mx-auto">
         {filteredProducts.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -282,85 +282,30 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
             <p className="text-gray-400 text-sm mt-2">Tente outra busca ou categoria</p>
           </div>
         ) : (
-          filteredProducts.map((product, index) => (
-            <div
-              key={product.id}
-              className="group bg-white rounded-3xl p-4 shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-amber-200 relative overflow-hidden hover:-translate-y-1"
-              style={{
-                animation: `fadeInUp 0.5s ease-out ${index * 0.05}s both`
-              }}
-            >
-              {/* Badge de promoção com animação */}
-              {product.is_promotion && (
-                <div className="absolute top-4 left-4 z-10">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur animate-pulse" />
-                    <div className="relative bg-gradient-to-r from-red-500 to-orange-500 px-4 py-1.5 rounded-full flex items-center space-x-1 shadow-lg">
-                      <Flame size={14} className="text-white animate-pulse" />
-                      <span className="text-white text-xs font-black uppercase tracking-wider">Promoção</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {filteredProducts.map((product, index) => (
+              <div
+                key={product.id}
+                className="group bg-white rounded-[40px] p-5 shadow-xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all duration-500 border border-gray-100 hover:border-amber-200 relative overflow-hidden hover:-translate-y-3 flex flex-col"
+                style={{
+                  animation: `fadeInUp 0.5s ease-out ${index * 0.05}s both`
+                }}
+              >
+                {/* Badge de promoção */}
+                {product.is_promotion && (
+                  <div className="absolute top-4 left-4 z-10">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur animate-pulse" />
+                      <div className="relative bg-gradient-to-r from-red-500 to-orange-500 px-4 py-1.5 rounded-full flex items-center space-x-1 shadow-lg">
+                        <Flame size={14} className="text-white animate-pulse" />
+                        <span className="text-white text-[10px] font-black uppercase tracking-wider">Promoção</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div className="flex items-center gap-4">
-                {/* Info do produto */}
-                <div className="flex-1 space-y-2">
-                  <h3 className="font-black text-lg text-gray-900 leading-tight group-hover:text-amber-600 transition-colors">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">
-                    {product.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between pt-2">
-                    {/* Preço com destaque */}
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-black bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                        R$ {Number(product.price).toFixed(2)}
-                      </span>
-                    </div>
-
-                    {/* Botão de adicionar com animação */}
-                    <div className="flex items-center bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-1.5 border border-gray-200 group-hover:border-amber-300 transition-all">
-                      {cart.has(product.id) ? (
-                        <>
-                          <button 
-                            onClick={() => removeFromCart(product.id)} 
-                            className="p-2.5 bg-white rounded-xl text-amber-500 shadow-sm hover:shadow-md transition-all hover:scale-110 active:scale-95"
-                          >
-                            <Minus size={16} />
-                          </button>
-                          <span className="px-4 font-black text-base min-w-[40px] text-center">
-                            {cart.get(product.id)}
-                          </span>
-                          <button 
-                            onClick={() => addToCart(product.id)} 
-                            className="p-2.5 bg-gradient-to-r from-amber-400 to-orange-400 rounded-xl text-white shadow-md hover:shadow-lg transition-all hover:scale-110 active:scale-95"
-                          >
-                            <Plus size={16} />
-                          </button>
-                        </>
-                      ) : (
-                        <button 
-                          onClick={() => addToCart(product.id)} 
-                          disabled={!effectiveIsOpen} 
-                          className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase flex items-center shadow-md transition-all duration-300 ${
-                            effectiveIsOpen 
-                              ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-white hover:shadow-lg hover:scale-105 active:scale-95' 
-                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                          }`}
-                        >
-                          <Plus size={16} className="mr-1.5" /> 
-                          Adicionar
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Imagem do produto com efeito hover */}
-                <div className="w-32 h-32 rounded-3xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 relative group-hover:scale-105 transition-transform duration-500">
+                {/* Imagem do produto com proporção 4:3 e efeito hover */}
+                <div className="aspect-[4/3] w-full rounded-[32px] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 relative group-hover:scale-[1.02] transition-transform duration-500 mb-5">
                   {product.image ? (
                     <img 
                       src={product.image} 
@@ -369,24 +314,75 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-300">
-                      <StoreIcon size={32} />
+                      <StoreIcon size={48} />
                     </div>
                   )}
-                  {/* Overlay gradiente no hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+
+                {/* Info do produto */}
+                <div className="flex-1 flex flex-col">
+                  <h3 className="font-black text-xl text-gray-900 leading-tight group-hover:text-amber-600 transition-colors mb-2">
+                    {product.name}
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed line-clamp-2 mb-6 flex-1">
+                    {product.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-between mt-auto">
+                    {/* Preço */}
+                    <span className="text-2xl font-black bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                      R$ {Number(product.price).toFixed(2)}
+                    </span>
+
+                    {/* Botão de adicionar */}
+                    <div className="flex items-center bg-gray-50 rounded-2xl p-1 border border-gray-100 group-hover:border-amber-300 transition-all">
+                      {cart.has(product.id) ? (
+                        <div className="flex items-center">
+                          <button 
+                            onClick={() => removeFromCart(product.id)} 
+                            className="p-2 bg-white rounded-xl text-amber-500 shadow-sm hover:shadow-md transition-all hover:scale-110 active:scale-95"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="px-3 font-black text-sm min-w-[30px] text-center">
+                            {cart.get(product.id)}
+                          </span>
+                          <button 
+                            onClick={() => addToCart(product.id)} 
+                            className="p-2 bg-gradient-to-r from-amber-400 to-orange-400 rounded-xl text-white shadow-md hover:shadow-lg transition-all hover:scale-110 active:scale-95"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => addToCart(product.id)} 
+                          disabled={!effectiveIsOpen} 
+                          className={`p-2.5 rounded-xl font-black text-xs uppercase flex items-center shadow-md transition-all duration-300 ${
+                            effectiveIsOpen 
+                              ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-white hover:shadow-lg hover:scale-110 active:scale-95' 
+                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          <Plus size={18} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Botão do carrinho flutuante com animação */}
+      {/* Botão do carrinho flutuante */}
       {cartItemsCount > 0 && !isCartOpen && (
-        <div className="fixed bottom-6 left-6 right-6 z-40 max-w-xl mx-auto">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-xl px-6 z-40">
           <button 
             onClick={() => setIsCartOpen(true)} 
-            className={`w-full p-6 rounded-3xl flex items-center justify-between shadow-2xl transition-all duration-500 transform hover:scale-105 active:scale-95 ${
+            className={`w-full p-6 rounded-[32px] flex items-center justify-between shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-500 transform hover:scale-105 active:scale-95 ${
               isBelowMinOrder 
                 ? 'bg-gradient-to-r from-gray-700 to-gray-800 cursor-not-allowed' 
                 : 'bg-gradient-to-r from-black via-gray-900 to-black hover:shadow-amber-400/20'
@@ -422,11 +418,10 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
         </div>
       )}
 
-      {/* Modal do carrinho com animações suaves */}
+      {/* Modal do carrinho */}
       {isCartOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-lg z-[100] flex items-end justify-center animate-in fade-in duration-300">
           <div className="bg-gradient-to-b from-white to-gray-50 w-full max-w-2xl rounded-t-[40px] h-[94vh] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-500">
-            {/* Header do modal */}
             <div className="p-8 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
               <div>
                 <h2 className="text-3xl font-black uppercase tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
@@ -444,9 +439,7 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
               </button>
             </div>
             
-            {/* Conteúdo scrollável */}
             <div className="flex-1 overflow-y-auto p-8 space-y-6">
-              {/* Items do carrinho */}
               <div className="space-y-3">
                 {Array.from(cart.entries()).map(([id, qty]) => {
                   const p = products.find(prod => prod.id === id)!;
@@ -490,7 +483,6 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                 })}
               </div>
 
-              {/* Formulário de dados */}
               <div className="pt-6 space-y-6">
                 <div className="flex items-center space-x-3">
                   <div className="h-8 w-1.5 bg-gradient-to-b from-amber-400 to-orange-400 rounded-full" />
@@ -533,7 +525,6 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                   )}
                 </div>
 
-                {/* Forma de pagamento */}
                 <div className="pt-4 space-y-5">
                   <div className="flex items-center space-x-3">
                     <div className="h-8 w-1.5 bg-gradient-to-b from-amber-400 to-orange-400 rounded-full" />
@@ -564,7 +555,6 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                 </div>
               </div>
 
-              {/* Alert de pedido mínimo */}
               {isBelowMinOrder && (
                 <div className="p-5 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-2xl flex items-center space-x-4 text-red-700 shadow-lg animate-in fade-in zoom-in duration-300">
                   <AlertCircle size={24} className="shrink-0 animate-pulse" />
@@ -580,7 +570,6 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
               )}
             </div>
 
-            {/* Footer com botão de finalizar */}
             <div className="p-8 bg-gradient-to-r from-black via-gray-900 to-black border-t border-gray-800">
               <div className="flex justify-between items-center text-white mb-6">
                 <span className="font-bold text-gray-400 uppercase text-xs tracking-widest">
@@ -612,7 +601,6 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
         </div>
       )}
 
-      {/* Animação de fadeInUp */}
       <style>{`
         @keyframes fadeInUp {
           from {
