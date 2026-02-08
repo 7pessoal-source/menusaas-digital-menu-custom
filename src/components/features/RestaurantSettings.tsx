@@ -90,6 +90,25 @@ const RestaurantSettings: React.FC = () => {
     setFormData({ ...formData, logo: publicUrl });
   };
 
+  // 🔥 VALIDAR se o slug já existe
+  const validateSlug = async (slug: string): Promise<boolean> => {
+    if (!slug || !currentRestaurant) return false;
+    
+    const { data, error } = await supabase
+      .from('restaurants')
+      .select('id')
+      .eq('slug', slug)
+      .neq('id', currentRestaurant.id) // Ignora o próprio restaurante
+      .maybeSingle();
+    
+    if (error) {
+      console.error('Erro ao validar slug:', error);
+      return false;
+    }
+    
+    return data === null; // Retorna true se NÃO encontrou duplicata
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -110,10 +129,18 @@ const RestaurantSettings: React.FC = () => {
       alert('❌ Slug deve conter apenas letras minúsculas, números e hífens (ex: meu-restaurante)');
       return;
     }
+    
+    // 🔥 VALIDAÇÃO: Slug único
+    setLoading(true);
+    const isSlugAvailable = await validateSlug(formData.slug);
+    
+    if (!isSlugAvailable) {
+      setLoading(false);
+      alert('❌ Este slug já está em uso. Por favor, escolha outro.');
+      return;
+    }
 
     console.log('🔵 [FORM SUBMIT] Submitting data:', formData);
-    setLoading(true);
-
     const result = await updateRestaurant(formData);
 
     if (result?.success) {
@@ -277,17 +304,25 @@ const RestaurantSettings: React.FC = () => {
               <span className="text-xs font-bold text-gray-400 uppercase ml-1">Telefone</span>
               <input
                 type="text"
-                placeholder="(11) 9999-9999"
+                placeholder="(11) 99999-9999"
                 className="mt-1 w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-amber-400"
                 value={formData.contact_phone || ''}
-                onChange={(e) =>
-                  setFormData({ ...formData, contact_phone: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
               />
             </label>
 
             <label className="block md:col-span-2">
-              <span className="text-xs font-bold text-gray-400 uppercase ml-1">Endereço</span>
+              <span className="text-xs font-bold text-gray-400 uppercase ml-1">E-mail de Contato</span>
+              <input
+                type="email"
+                className="mt-1 w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-amber-400"
+                value={formData.contact_email || ''}
+                onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+              />
+            </label>
+
+            <label className="block md:col-span-2">
+              <span className="text-xs font-bold text-gray-400 uppercase ml-1">Endereço Completo</span>
               <input
                 type="text"
                 className="mt-1 w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-amber-400"
@@ -295,70 +330,122 @@ const RestaurantSettings: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </label>
+          </div>
+        </div>
 
-            <label className="block">
-              <span className="text-xs font-bold text-gray-400 uppercase ml-1">
-                Pedido Mínimo (R$)
-              </span>
-              <div className="relative mt-1">
-                <DollarSign
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={18}
-                />
-                <input
-                  type="number"
-                  step="0.01"
-                  className="w-full p-4 pl-12 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-amber-400"
-                  value={formData.min_order_value || 0}
-                  onChange={(e) =>
-                    setFormData({ ...formData, min_order_value: parseFloat(e.target.value) })
-                  }
-                />
-              </div>
-            </label>
+        {/* Identidade Visual */}
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+          <h3 className="text-xl font-black mb-4">Identidade Visual</h3>
 
-            <div className="block">
-              <span className="text-xs font-bold text-gray-400 uppercase ml-1">Logo</span>
-              <div className="mt-1 flex items-center space-x-4">
-                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 flex items-center justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <span className="text-xs font-bold text-gray-400 uppercase ml-1">Logo do Restaurante</span>
+              <div className="flex items-center space-x-6">
+                <div className="w-24 h-24 bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden relative group">
                   {formData.logo ? (
-                    <img
-                      src={formData.logo}
-                      className="w-full h-full object-cover"
-                      alt="Logo"
-                    />
+                    <img src={formData.logo} alt="Logo" className="w-full h-full object-cover" />
                   ) : (
-                    <ImageIcon className="text-gray-300" />
+                    <ImageIcon className="text-gray-300" size={32} />
                   )}
+                  <button
+                    type="button"
+                    onClick={() => logoInputRef.current?.click()}
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-black uppercase"
+                  >
+                    Alterar
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => logoInputRef.current?.click()}
-                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all text-sm uppercase tracking-tighter"
-                >
-                  Atualizar
-                </button>
+                <div className="flex-1 space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => logoInputRef.current?.click()}
+                    className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl text-xs font-black uppercase transition-colors"
+                  >
+                    Upload Logo
+                  </button>
+                  <p className="text-[10px] text-gray-400 font-medium">
+                    Recomendado: 512x512px (PNG ou JPG)
+                  </p>
+                </div>
                 <input
                   type="file"
                   ref={logoInputRef}
-                  hidden
+                  className="hidden"
                   accept="image/*"
                   onChange={handleLogoUpload}
                 />
               </div>
             </div>
+
+            <div className="space-y-4">
+              <span className="text-xs font-bold text-gray-400 uppercase ml-1">Cores da Marca</span>
+              <div className="grid grid-cols-2 gap-4">
+                <label className="block">
+                  <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Primária</span>
+                  <div className="flex items-center space-x-2 p-2 bg-gray-50 border border-gray-100 rounded-2xl">
+                    <input
+                      type="color"
+                      className="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent"
+                      value={formData.primary_color || '#FBBF24'}
+                      onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
+                    />
+                    <span className="text-xs font-bold uppercase">{formData.primary_color}</span>
+                  </div>
+                </label>
+                <label className="block">
+                  <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Secundária</span>
+                  <div className="flex items-center space-x-2 p-2 bg-gray-50 border border-gray-100 rounded-2xl">
+                    <input
+                      type="color"
+                      className="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent"
+                      value={formData.secondary_color || '#000000'}
+                      onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
+                    />
+                    <span className="text-xs font-bold uppercase">{formData.secondary_color}</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Configurações de Pedido */}
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+          <h3 className="text-xl font-black mb-4">Configurações de Pedido</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <label className="block">
+              <span className="text-xs font-bold text-gray-400 uppercase ml-1 flex items-center">
+                <DollarSign size={14} className="mr-1" /> Valor Mínimo do Pedido
+              </span>
+              <input
+                type="number"
+                step="0.01"
+                className="mt-1 w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-amber-400"
+                value={formData.min_order_value || 0}
+                onChange={(e) =>
+                  setFormData({ ...formData, min_order_value: parseFloat(e.target.value) })
+                }
+              />
+            </label>
           </div>
         </div>
 
         {/* Botão Salvar */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-black text-white p-6 rounded-3xl font-black text-xl flex items-center justify-center space-x-2 active:scale-95 shadow-xl disabled:opacity-50 transition-all"
-        >
-          {loading ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} />}
-          <span>{loading ? 'Salvando...' : 'Salvar Alterações'}</span>
-        </button>
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-black text-white py-6 rounded-[32px] font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-3 disabled:opacity-70 disabled:hover:scale-100"
+          >
+            {loading ? (
+              <Loader2 className="animate-spin" size={24} />
+            ) : (
+              <Save size={24} />
+            )}
+            <span>{loading ? 'Salvando...' : 'Salvar Configurações'}</span>
+          </button>
+        </div>
       </form>
     </div>
   );
