@@ -91,11 +91,12 @@ const ProductModal: React.FC<ProductModalProps> = ({
       <div className="bg-[#1a1a1a] w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-y-auto">
         {/* Header com imagem */}
         <div className="relative h-64 sm:h-80">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover sm:rounded-t-3xl"
-          />
+<img
+  src={`${product.image}?width=800&height=800&resize=cover`}
+  alt={product.name}
+  loading="eager"
+  className="w-full h-full object-cover sm:rounded-t-3xl"
+/>
           <button
             onClick={onClose}
             className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full hover:bg-black/70 transition-all"

@@ -256,9 +256,11 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                 <div className="w-full aspect-square rounded-2xl overflow-hidden bg-[#1a1a1a] mb-3 flex items-center justify-center">
                   {product.image ? (
                     <img 
-                      src={product.image} 
+                      src={`${product.image}?width=400&height=400&resize=cover`}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                      alt={product.name} 
+                      alt={product.name}
                     />
                   ) : (
                     <StoreIcon size={40} className="text-gray-700" />

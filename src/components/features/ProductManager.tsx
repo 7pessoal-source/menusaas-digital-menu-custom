@@ -103,7 +103,8 @@ const ProductManager: React.FC = () => {
               <div className="h-48 overflow-hidden relative bg-[#1a1a1a]">
                 {p.image ? (
                   <img
-                    src={p.image}
+                    src={`${p.image}?width=400&height=400&resize=cover`}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     alt={p.name}
                   />
