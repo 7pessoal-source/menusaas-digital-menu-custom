@@ -4,6 +4,7 @@ export interface Restaurant {
   name: string;
   slug: string;
   logo?: string;
+  cover_image?: string;
   description?: string;
   primary_color: string;
   secondary_color: string;
@@ -16,6 +17,7 @@ export interface Restaurant {
   allows_delivery: boolean;
   user_id?: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface Category {

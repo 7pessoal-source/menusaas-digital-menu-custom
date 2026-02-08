@@ -140,7 +140,11 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
 
       <header className="bg-black text-white relative">
         <div className="h-44 w-full opacity-40 overflow-hidden">
-           <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000" className="w-full h-full object-cover" alt="Banner" />
+           <img 
+             src={restaurant.cover_image || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000"} 
+             className="w-full h-full object-cover" 
+             alt="Banner" 
+           />
         </div>
         <div className="absolute top-4 left-4 z-10">
            <button onClick={onExit} className="p-3 bg-white/10 backdrop-blur-xl rounded-full border border-white/20"><ArrowLeft size={20} /></button>

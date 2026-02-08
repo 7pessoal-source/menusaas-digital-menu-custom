@@ -23,6 +23,7 @@ const RestaurantSettings: React.FC = () => {
     slug: currentRestaurant?.slug || '',
     description: currentRestaurant?.description || '',
     logo: currentRestaurant?.logo || '',
+    cover_image: currentRestaurant?.cover_image || '',
     primary_color: currentRestaurant?.primary_color || '#FBBF24',
     secondary_color: currentRestaurant?.secondary_color || '#000000',
     whatsapp: currentRestaurant?.whatsapp || '',
@@ -35,6 +36,7 @@ const RestaurantSettings: React.FC = () => {
   });
 
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   // 🔥 Sincronizar formData quando currentRestaurant mudar
   useEffect(() => {
@@ -44,6 +46,7 @@ const RestaurantSettings: React.FC = () => {
         slug: currentRestaurant.slug || '',
         description: currentRestaurant.description || '',
         logo: currentRestaurant.logo || '',
+        cover_image: currentRestaurant.cover_image || '',
         primary_color: currentRestaurant.primary_color || '#FBBF24',
         secondary_color: currentRestaurant.secondary_color || '#000000',
         whatsapp: currentRestaurant.whatsapp || '',
@@ -90,6 +93,31 @@ const RestaurantSettings: React.FC = () => {
     setFormData({ ...formData, logo: publicUrl });
   };
 
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentRestaurant) return;
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `cover-${currentRestaurant.id}.${fileExt}`;
+    const filePath = `covers/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      alert('Erro ao fazer upload da capa');
+      console.error(uploadError);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    setFormData({ ...formData, cover_image: publicUrl });
+  };
+
   // 🔥 VALIDAR se o slug já existe
   const validateSlug = async (slug: string): Promise<boolean> => {
     if (!slug || !currentRestaurant) return false;
@@ -119,7 +147,7 @@ const RestaurantSettings: React.FC = () => {
     }
     
     if (!formData.slug?.trim()) {
-      alert('❌ Slug (URL) é obrigatório');
+      alert('❌ Link da Loja é obrigatório');
       return;
     }
     
@@ -252,7 +280,7 @@ const RestaurantSettings: React.FC = () => {
 
             <label className="block">
               <span className="text-xs font-bold text-gray-400 uppercase ml-1">
-                Slug (URL)
+                Link da Loja
               </span>
               <input
                 type="text"
@@ -271,10 +299,10 @@ const RestaurantSettings: React.FC = () => {
                 placeholder="meu-restaurante"
               />
               <p className="text-[10px] text-gray-400 mt-1 ml-1">
-                💡 Apenas letras minúsculas, números e hífens. Ex: pizzaria-do-ze
+                💡 Este será o endereço do seu cardápio online. Use apenas letras minúsculas, números e hífens.
               </p>
               <p className="text-[10px] text-green-600 mt-1 ml-1 font-bold">
-                🔗 Seu link: {window.location.origin}/menu/{formData.slug || 'seu-slug'}
+                🔗 Seu cardápio: {window.location.origin}/menu/{formData.slug || 'seu-link'}
               </p>
             </label>
 
@@ -338,6 +366,40 @@ const RestaurantSettings: React.FC = () => {
           <h3 className="text-xl font-black mb-4">Identidade Visual</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="block md:col-span-2">
+              <span className="text-xs font-bold text-gray-400 uppercase ml-1">Imagem de Capa</span>
+              <p className="text-[10px] text-gray-500 mt-1 ml-1 mb-3">
+                Esta imagem aparece no topo do seu cardápio online, como uma capa.
+              </p>
+              <div className="mt-1 space-y-4">
+                <div className="w-full h-40 rounded-3xl overflow-hidden bg-gray-100 border border-gray-100 flex items-center justify-center">
+                  {formData.cover_image ? (
+                    <img
+                      src={formData.cover_image}
+                      className="w-full h-full object-cover"
+                      alt="Capa"
+                    />
+                  ) : (
+                    <ImageIcon className="text-gray-300" size={48} />
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all text-sm uppercase tracking-tighter"
+                >
+                  {formData.cover_image ? 'Alterar Capa' : 'Adicionar Capa'}
+                </button>
+                <input
+                  type="file"
+                  ref={coverInputRef}
+                  hidden
+                  accept="image/*"
+                  onChange={handleCoverUpload}
+                />
+              </div>
+            </div>
+
             <div className="space-y-4">
               <span className="text-xs font-bold text-gray-400 uppercase ml-1">Logo do Restaurante</span>
               <div className="flex items-center space-x-6">
