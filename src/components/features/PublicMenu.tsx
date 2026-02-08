@@ -16,6 +16,7 @@ import {
   ShoppingBag
 } from 'lucide-react';
 import { Restaurant, Category, Product, OrderItem, CartItem } from '../../types';
+import { formatProductPrice } from '../../utils/priceRange';
 import ProductModal from './ProductModal';
 
 interface PublicMenuProps {
@@ -289,7 +290,7 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                   {/* Preço e botão */}
                   <div className="flex items-center justify-between pt-2">
                     <span className="text-orange-500 text-xl font-bold">
-                      ${Number(product.price).toFixed(2)}
+                      {formatProductPrice(product)}
                     </span>
 
                     <button 

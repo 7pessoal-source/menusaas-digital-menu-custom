@@ -39,6 +39,9 @@ export interface Product {
   is_available: boolean;
   is_promotion?: boolean;
   allows_observations?: boolean;
+  price_display_min?: number;
+  price_display_max?: number;
+  has_variations?: boolean;
   created_at?: string;
 }
 

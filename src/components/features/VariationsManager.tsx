@@ -5,6 +5,7 @@ import {
   ProductVariationGroup, 
   ProductVariationOption 
 } from '@/types';
+import { updateProductPriceRange } from '@/utils/priceRange';
 import { 
   Plus, 
   Trash2, 
@@ -92,6 +93,7 @@ const VariationsManager: React.FC<VariationsManagerProps> = ({ product, onClose 
     if (!error) {
       setNewGroup({ name: '', is_required: true, allow_multiple: false });
       await fetchVariations();
+      await updateProductPriceRange(product.id, product.price);
     }
     setLoading(false);
   };
@@ -108,6 +110,7 @@ const VariationsManager: React.FC<VariationsManagerProps> = ({ product, onClose 
 
     if (!error) {
       await fetchVariations();
+      await updateProductPriceRange(product.id, product.price);
     }
   };
 
@@ -131,6 +134,7 @@ const VariationsManager: React.FC<VariationsManagerProps> = ({ product, onClose 
     if (!error) {
       setNewOption({ ...newOption, [groupId]: { name: '', price_adjustment: 0, is_default: false } });
       await fetchVariations();
+      await updateProductPriceRange(product.id, product.price);
     }
     setLoading(false);
   };
@@ -143,6 +147,7 @@ const VariationsManager: React.FC<VariationsManagerProps> = ({ product, onClose 
 
     if (!error) {
       await fetchVariations();
+      await updateProductPriceRange(product.id, product.price);
     }
   };
 
