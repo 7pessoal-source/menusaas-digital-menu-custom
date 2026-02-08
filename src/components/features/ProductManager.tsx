@@ -15,7 +15,7 @@ import { supabase } from '../../services/supabase';
 
 const ProductManager: React.FC = () => {
   const { currentRestaurant, categories } = useRestaurantStore();
-  const { products, createProduct, updateProduct, deleteProduct } = useProducts();
+  const { products, saveProduct, removeProduct } = useProducts();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Product>>({});
   const productImageRef = useRef<HTMLInputElement>(null);
@@ -47,27 +47,17 @@ const ProductManager: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentRestaurant) return;
-
-    const productData = {
-      ...formData,
-      restaurant_id: currentRestaurant.id,
-    };
-
-    if (formData.id) {
-      await updateProduct(formData.id, productData);
-    } else {
-      await createProduct(productData as Omit<Product, 'id' | 'created_at'>);
-    }
     
-    setIsModalOpen(false);
-    setFormData({});
+    const result = await saveProduct(formData as any);
+    
+    if (result.success) {
+      setIsModalOpen(false);
+      setFormData({});
+    }
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este produto?')) {
-      await deleteProduct(id);
-    }
+    await removeProduct(id);
   };
 
   return (

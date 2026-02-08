@@ -4,6 +4,7 @@ export interface Restaurant {
   name: string;
   slug: string;
   logo?: string;
+  description?: string;
   primary_color: string;
   secondary_color: string;
   contact_email: string;
