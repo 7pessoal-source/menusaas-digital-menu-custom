@@ -9,12 +9,8 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localho
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Gemini AI Constants
-export const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-
 // Feature Flags
 export const FEATURE_FLAGS = {
-  ENABLE_AI_DESCRIPTIONS: import.meta.env.VITE_ENABLE_AI_DESCRIPTIONS === 'true',
   ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
 };
 

@@ -37,7 +37,7 @@ const RestaurantSettings: React.FC = () => {
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   const handleCopyLink = () => {
-    const url = `${window.location.origin}?menu=${currentRestaurant?.slug}`;
+    const url = `${window.location.origin}/menu/${currentRestaurant?.slug}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);

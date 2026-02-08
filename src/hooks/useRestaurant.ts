@@ -94,9 +94,12 @@ export const useRestaurant = () => {
 
     setLoading(true);
     try {
+      // Remove campos que não existem no banco (updated_at, created_at)
+      const { created_at, updated_at, ...cleanUpdates } = updates as any;
+      
       const { data, error } = await supabase
         .from('restaurants')
-        .update(updates)
+        .update(cleanUpdates)
         .eq('id', currentRestaurant.id)
         .select()
         .single();
