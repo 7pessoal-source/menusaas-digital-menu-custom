@@ -193,7 +193,7 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                 }`}
               >
                 <span className="text-2xl mb-1">
-                  {cat.id === 'all' ? '✨' : '🍽️'}
+                  {cat.id === 'all' ? '✨' : (cat.name.toLowerCase().includes('bebida') ? '🥤' : '🍽️')}
                 </span>
                 <span className="text-xs font-semibold whitespace-nowrap">
                   {cat.name.replace('✨ ', '')}
