@@ -37,8 +37,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   ];
 
   const handleCopyLink = () => {
-    // Simula o link real do cardápio. Em produção seria algo como https://sua-url.com/cardapio/slug
-    const url = `${window.location.origin}?menu=${restaurant.slug}`;
+    const url = `${window.location.origin}/menu/${restaurant.slug}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
