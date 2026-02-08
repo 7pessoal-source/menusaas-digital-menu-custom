@@ -177,6 +177,33 @@ const RestaurantSettings: React.FC = () => {
             </label>
 
             <label className="block">
+              <span className="text-xs font-bold text-gray-400 uppercase ml-1">
+                URL do Cardápio (Slug)
+              </span>
+              <div className="mt-1 flex items-center space-x-2">
+                <span className="text-gray-500 font-mono text-sm">seudominio.com/menu/</span>
+                <input
+                  type="text"
+                  className="flex-1 p-4 bg-[#1a1a1a] border border-white/5 rounded-2xl font-bold outline-none focus:border-white/10 text-white font-mono"
+                  value={formData.slug}
+                  onChange={(e) => {
+                    // Remove espaços e caracteres especiais, converte para minúsculas
+                    const slug = e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9-]/g, '-')
+                      .replace(/-+/g, '-')
+                      .replace(/^-|-$/g, '');
+                    setFormData({ ...formData, slug });
+                  }}
+                  placeholder="meu-restaurante"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2 ml-1">
+                Este será o endereço do seu cardápio digital. Ex: seudominio.com/menu/<strong className="text-white">{formData.slug || 'meu-restaurante'}</strong>
+              </p>
+            </label>
+
+            <label className="block">
               <span className="text-xs font-bold text-gray-400 uppercase ml-1">Descrição / Slogan</span>
               <textarea
                 className="mt-1 w-full p-4 bg-[#1a1a1a] border border-white/5 rounded-2xl h-24 resize-none font-medium outline-none focus:border-white/10 text-white"
