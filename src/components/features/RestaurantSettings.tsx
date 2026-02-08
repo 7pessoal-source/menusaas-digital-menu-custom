@@ -28,7 +28,6 @@ const RestaurantSettings: React.FC = () => {
     isOpen: currentRestaurant?.isOpen ?? true,
     allows_delivery: currentRestaurant?.allows_delivery ?? true,
     min_order_value: currentRestaurant?.min_order_value || 0,
-    instagram: (currentRestaurant as any)?.instagram || '',
   });
 
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -50,7 +49,6 @@ const RestaurantSettings: React.FC = () => {
         isOpen: currentRestaurant.isOpen ?? true,
         allows_delivery: currentRestaurant.allows_delivery ?? true,
         min_order_value: currentRestaurant.min_order_value || 0,
-        instagram: (currentRestaurant as any)?.instagram || '',
       });
     }
   }, [currentRestaurant]);
@@ -195,17 +193,6 @@ const RestaurantSettings: React.FC = () => {
                   className="mt-1 w-full p-4 bg-[#1a1a1a] border border-white/5 rounded-2xl font-bold outline-none focus:border-white/10 text-white"
                   value={formData.whatsapp || ''}
                   onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-xs font-bold text-gray-400 uppercase ml-1">Instagram (usuário)</span>
-                <input
-                  type="text"
-                  className="mt-1 w-full p-4 bg-[#1a1a1a] border border-white/5 rounded-2xl font-bold outline-none focus:border-white/10 text-white"
-                  placeholder="@seu.restaurante"
-                  value={(formData as any).instagram || ''}
-                  onChange={(e) => setFormData({ ...formData, instagram: e.target.value } as any)}
                 />
               </label>
             </div>
