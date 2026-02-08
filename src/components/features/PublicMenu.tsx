@@ -271,8 +271,8 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
         </div>
       </div>
 
-      {/* Grid de produtos com animações - 4 colunas fixas */}
-      <div className="px-4 py-6 max-w-7xl mx-auto">
+      {/* Lista de produtos com animações */}
+      <div className="px-6 py-6 space-y-4 max-w-2xl mx-auto">
         {filteredProducts.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -282,29 +282,85 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
             <p className="text-gray-400 text-sm mt-2">Tente outra busca ou categoria</p>
           </div>
         ) : (
-          <div className="grid grid-cols-4 gap-3">
-            {filteredProducts.map((product, index) => (
-              <div
-                key={product.id}
-                className="group bg-white rounded-2xl p-2.5 shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-amber-200 relative overflow-hidden hover:-translate-y-2 flex flex-col"
-                style={{
-                  animation: `fadeInUp 0.5s ease-out ${index * 0.05}s both`
-                }}
-              >
-                {/* Badge de promoção com animação - menor */}
-                {product.is_promotion && (
-                  <div className="absolute top-2 right-2 z-10">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur animate-pulse" />
-                      <div className="relative bg-gradient-to-r from-red-500 to-orange-500 p-1.5 rounded-full shadow-lg">
-                        <Flame size={12} className="text-white" />
-                      </div>
+          filteredProducts.map((product, index) => (
+            <div
+              key={product.id}
+              className="group bg-white rounded-3xl p-4 shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-amber-200 relative overflow-hidden hover:-translate-y-1"
+              style={{
+                animation: `fadeInUp 0.5s ease-out ${index * 0.05}s both`
+              }}
+            >
+              {/* Badge de promoção com animação */}
+              {product.is_promotion && (
+                <div className="absolute top-4 left-4 z-10">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur animate-pulse" />
+                    <div className="relative bg-gradient-to-r from-red-500 to-orange-500 px-4 py-1.5 rounded-full flex items-center space-x-1 shadow-lg">
+                      <Flame size={14} className="text-white animate-pulse" />
+                      <span className="text-white text-xs font-black uppercase tracking-wider">Promoção</span>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Imagem do produto */}
-                <div className="w-full aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 mb-2 relative group-hover:scale-105 transition-transform duration-500">
+              <div className="flex items-center gap-4">
+                {/* Info do produto */}
+                <div className="flex-1 space-y-2">
+                  <h3 className="font-black text-lg text-gray-900 leading-tight group-hover:text-amber-600 transition-colors">
+                    {product.name}
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">
+                    {product.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-between pt-2">
+                    {/* Preço com destaque */}
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-black bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                        R$ {Number(product.price).toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Botão de adicionar com animação */}
+                    <div className="flex items-center bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-1.5 border border-gray-200 group-hover:border-amber-300 transition-all">
+                      {cart.has(product.id) ? (
+                        <>
+                          <button 
+                            onClick={() => removeFromCart(product.id)} 
+                            className="p-2.5 bg-white rounded-xl text-amber-500 shadow-sm hover:shadow-md transition-all hover:scale-110 active:scale-95"
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <span className="px-4 font-black text-base min-w-[40px] text-center">
+                            {cart.get(product.id)}
+                          </span>
+                          <button 
+                            onClick={() => addToCart(product.id)} 
+                            className="p-2.5 bg-gradient-to-r from-amber-400 to-orange-400 rounded-xl text-white shadow-md hover:shadow-lg transition-all hover:scale-110 active:scale-95"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </>
+                      ) : (
+                        <button 
+                          onClick={() => addToCart(product.id)} 
+                          disabled={!effectiveIsOpen} 
+                          className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase flex items-center shadow-md transition-all duration-300 ${
+                            effectiveIsOpen 
+                              ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-white hover:shadow-lg hover:scale-105 active:scale-95' 
+                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          <Plus size={16} className="mr-1.5" /> 
+                          Adicionar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Imagem do produto com efeito hover */}
+                <div className="w-32 h-32 rounded-3xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 relative group-hover:scale-105 transition-transform duration-500">
                   {product.image ? (
                     <img 
                       src={product.image} 
@@ -313,68 +369,15 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-300">
-                      <StoreIcon size={24} />
+                      <StoreIcon size={32} />
                     </div>
                   )}
                   {/* Overlay gradiente no hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-
-                {/* Info do produto */}
-                <div className="flex-1 flex flex-col space-y-1.5">
-                  <h3 className="font-black text-xs text-gray-900 leading-tight group-hover:text-amber-600 transition-colors line-clamp-2">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-500 text-[10px] leading-snug line-clamp-2 flex-1">
-                    {product.description}
-                  </p>
-                  
-                  {/* Preço */}
-                  <div className="pt-1">
-                    <span className="text-sm font-black bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent block">
-                      R$ {Number(product.price).toFixed(2)}
-                    </span>
-                  </div>
-
-                  {/* Botão de adicionar */}
-                  <div className="pt-1.5">
-                    {cart.has(product.id) ? (
-                      <div className="flex items-center justify-center bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-1 border border-gray-200 group-hover:border-amber-300 transition-all">
-                        <button 
-                          onClick={() => removeFromCart(product.id)} 
-                          className="p-1.5 bg-white rounded-lg text-amber-500 shadow-sm hover:shadow-md transition-all hover:scale-110 active:scale-95"
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span className="px-2 font-black text-xs min-w-[25px] text-center">
-                          {cart.get(product.id)}
-                        </span>
-                        <button 
-                          onClick={() => addToCart(product.id)} 
-                          className="p-1.5 bg-gradient-to-r from-amber-400 to-orange-400 rounded-lg text-white shadow-md hover:shadow-lg transition-all hover:scale-110 active:scale-95"
-                        >
-                          <Plus size={12} />
-                        </button>
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={() => addToCart(product.id)} 
-                        disabled={!effectiveIsOpen} 
-                        className={`w-full py-2 rounded-xl font-black text-[9px] uppercase flex items-center justify-center shadow-md transition-all duration-300 ${
-                          effectiveIsOpen 
-                            ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-white hover:shadow-lg hover:scale-105 active:scale-95' 
-                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        <Plus size={12} className="mr-0.5" /> 
-                        Add
-                      </button>
-                    )}
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))
         )}
       </div>
 
