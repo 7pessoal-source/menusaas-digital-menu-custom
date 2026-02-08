@@ -41,17 +41,17 @@ export const useProducts = () => {
         restaurant_id: currentRestaurant.id,
       };
 
-      if (productFormData.id) {
+      if (data.id) {
         // Update existing product
         const { data: updatedProduct, error } = await supabase
           .from('products')
           .update(productData)
-          .eq('id', productFormData.id)
+          .eq('id', data.id)
           .select()
           .single();
 
         if (error) throw error;
-        updateProduct(productFormData.id, updatedProduct as Product);
+        updateProduct(data.id, updatedProduct as Product);
       } else {
         // Create new product
         const { data: newProduct, error } = await supabase
