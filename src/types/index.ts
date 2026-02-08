@@ -38,6 +38,7 @@ export interface Product {
   image: string;
   is_available: boolean;
   is_promotion?: boolean;
+  allows_observations?: boolean;
   created_at?: string;
 }
 
@@ -77,6 +78,25 @@ export interface ProductFormData extends Partial<Product> {
 }
 
 export interface RestaurantFormData extends Partial<Restaurant> {}
+
+// Tipos para extras/adicionais
+export interface ProductExtra {
+  id: string;
+  product_id: string;
+  name: string;
+  price: number;
+  is_available: boolean;
+  created_at?: string;
+}
+
+// Item do carrinho com extras
+export interface CartItem {
+  product: Product;
+  quantity: number;
+  selectedExtras: ProductExtra[];
+  observations: string;
+  totalPrice: number;
+}
 
 // View Types
 export type ViewType = 'landing' | 'auth' | 'admin' | 'menu';

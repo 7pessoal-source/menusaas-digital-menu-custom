@@ -15,7 +15,8 @@ import {
   Flame,
   ShoppingBag
 } from 'lucide-react';
-import { Restaurant, Category, Product, OrderItem } from '../../types';
+import { Restaurant, Category, Product, OrderItem, CartItem } from '../../types';
+import ProductModal from './ProductModal';
 
 interface PublicMenuProps {
   restaurant: Restaurant;
@@ -34,6 +35,9 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
   const [cart, setCart] = useState<Map<string, number>>(new Map());
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
   // Checkout States
   const [customerName, setCustomerName] = useState('');
@@ -66,6 +70,20 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
       else newCart.set(productId, current - 1);
       return newCart;
     });
+  };
+
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleAddToCart = (item: CartItem) => {
+    setCartItems((prev) => [...prev, item]);
+    // Aqui você pode adicionar lógica adicional, como mostrar toast de sucesso
+    console.log('Item adicionado ao carrinho:', item);
+    
+    // Mantendo compatibilidade com o contador do carrinho atual
+    addToCart(item.product.id);
   };
 
   const cartTotal: number = [...cart].reduce((sum, [id, qty]) => {
@@ -219,7 +237,8 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
             {filteredProducts.map((product, index) => (
               <div
                 key={product.id}
-                className="group bg-[#2a2a2a]/50 backdrop-blur-sm rounded-3xl p-4 border border-white/5 hover:border-white/10 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
+                className="group bg-[#2a2a2a]/50 backdrop-blur-sm rounded-3xl p-4 border border-white/5 hover:border-white/10 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden cursor-pointer"
+                onClick={() => handleProductClick(product)}
                 style={{
                   animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`
                 }}
@@ -490,6 +509,17 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
           scrollbar-width: none;
         }
       `}</style>
+      {selectedProduct && (
+        <ProductModal
+          product={selectedProduct}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedProduct(null);
+          }}
+          onAddToCart={handleAddToCart}
+        />
+      )}
     </div>
   );
 };
