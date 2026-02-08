@@ -108,8 +108,20 @@ const ProductModal: React.FC<ProductModalProps> = ({
         <div className="p-6 space-y-6">
           {/* Nome e Preço */}
           <div>
-            <h2 className="text-2xl font-black text-white mb-2">{product.name}</h2>
-            <p className="text-gray-400 text-sm mb-4">{product.description}</p>
+            <h2 className="text-2xl font-black text-white mb-3">{product.name}</h2>
+            
+            {/* DESCRIÇÃO DO PRODUTO - DESTACADA */}
+            {product.description && (
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4">
+                <p className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-2">
+                  Descrição
+                </p>
+                <p className="text-white text-base leading-relaxed">
+                  {product.description}
+                </p>
+              </div>
+            )}
+            
             <p className="text-3xl font-black text-amber-400">
               R$ {product.price.toFixed(2)}
             </p>
