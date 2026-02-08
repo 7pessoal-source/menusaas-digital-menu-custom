@@ -38,6 +38,7 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
   
   // Checkout States
   const [customerName, setCustomerName] = useState('');
@@ -253,15 +254,40 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                 )}
 
                 {/* Imagem */}
-                <div className="w-full aspect-square rounded-2xl overflow-hidden bg-[#1a1a1a] mb-3 flex items-center justify-center">
+                <div className="w-full aspect-square rounded-2xl overflow-hidden bg-[#1a1a1a] mb-3 flex items-center justify-center relative">
                   {product.image ? (
-                    <img 
-                      src={`${product.image}?width=400&height=400&resize=cover`}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                      alt={product.name}
-                    />
+                    <>
+                      {/* Skeleton loader */}
+                      {loadingImages.has(product.id) && (
+                        <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" />
+                      )}
+                      
+                      <img 
+                        src={`${product.image}?width=400&height=400&resize=cover`}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                        alt={product.name}
+                        onLoadStart={() => {
+                          setLoadingImages(prev => new Set(prev).add(product.id));
+                        }}
+                        onLoad={() => {
+                          setLoadingImages(prev => {
+                            const next = new Set(prev);
+                            next.delete(product.id);
+                            return next;
+                          });
+                        }}
+                        onError={(e) => {
+                          setLoadingImages(prev => {
+                            const next = new Set(prev);
+                            next.delete(product.id);
+                            return next;
+                          });
+                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%231a1a1a"/%3E%3C/svg%3E';
+                        }}
+                      />
+                    </>
                   ) : (
                     <StoreIcon size={40} className="text-gray-700" />
                   )}
