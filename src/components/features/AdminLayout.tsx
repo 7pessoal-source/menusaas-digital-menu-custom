@@ -45,7 +45,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#1a1a1a] flex flex-col md:flex-row">
       {/* Mobile Header */}
       <div className="md:hidden bg-black text-white p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center space-x-2">
@@ -144,7 +144,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-x-hidden p-4 md:p-8">
+      <main className="flex-1 overflow-x-hidden p-4 md:p-8 bg-[#1a1a1a]">
         <div className="max-w-6xl mx-auto">
           {children}
         </div>

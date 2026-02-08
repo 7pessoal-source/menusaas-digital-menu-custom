@@ -18,6 +18,7 @@ export interface Restaurant {
   user_id?: string;
   created_at?: string;
   updated_at?: string;
+  instagram?: string;
 }
 
 export interface Category {

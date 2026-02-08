@@ -91,43 +91,43 @@ const CategoryManager: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-black">Categorias</h2>
+        <h2 className="text-3xl font-black text-white">Categorias</h2>
         <button
           onClick={() => {
             setFormData({ name: '' });
             setIsModalOpen(true);
           }}
-          className="bg-black text-white px-6 py-3 rounded-2xl font-bold flex items-center hover:bg-gray-800 transition-all shadow-lg"
+          className="bg-orange-500 text-white px-6 py-3 rounded-2xl font-bold flex items-center hover:bg-orange-600 transition-all shadow-lg"
         >
           <PlusCircle size={18} className="mr-2" /> Nova Categoria
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {categories.length === 0 ? (
-          <div className="col-span-full py-20 text-center border-2 border-dashed border-gray-200 rounded-3xl text-gray-400 font-bold">
+          <div className="col-span-full py-20 text-center border-2 border-dashed border-white/10 rounded-3xl text-gray-500 font-bold">
             Nenhuma categoria cadastrada.
           </div>
         ) : (
-          categories.map((cat) => (
+          categories.map((c) => (
             <div
-              key={cat.id}
-              className="bg-white p-6 rounded-3xl border border-gray-100 flex justify-between items-center shadow-sm hover:shadow-md transition-all"
+              key={c.id}
+              className="bg-[#2a2a2a] p-6 rounded-3xl border border-white/5 flex justify-between items-center group hover:border-orange-500/30 transition-all shadow-sm"
             >
-              <span className="font-bold text-lg">{cat.name}</span>
+              <h4 className="font-bold text-lg text-white">{c.name}</h4>
               <div className="flex space-x-2">
                 <button
                   onClick={() => {
-                    setFormData(cat);
+                    setFormData(c);
                     setIsModalOpen(true);
                   }}
-                  className="p-2 text-gray-600 hover:text-black transition-colors"
+                  className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
                 >
                   <Edit2 size={18} />
                 </button>
                 <button
-                  onClick={() => handleDelete(cat.id)}
-                  className="p-2 text-red-400 hover:text-red-600 transition-colors"
+                  onClick={() => handleDelete(c.id)}
+                  className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -141,52 +141,48 @@ const CategoryManager: React.FC = () => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <form
             onSubmit={handleSubmit}
-            className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden"
+            className="bg-[#1a1a1a] w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-white/10"
           >
-            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-              <h3 className="text-xl font-bold uppercase tracking-tight">
+            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#2a2a2a]">
+              <h3 className="text-xl font-bold uppercase tracking-tight text-white">
                 {formData.id ? 'Editar Categoria' : 'Nova Categoria'}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-6 space-y-4">
               <label className="block">
-                <span className="text-xs font-bold text-gray-500 uppercase ml-1">
-                  Nome da Categoria
-                </span>
+                <span className="text-xs font-bold text-gray-400 uppercase ml-1">Nome da Categoria</span>
                 <input
                   type="text"
                   required
-                  className="mt-1 w-full p-4 bg-gray-50 border-none rounded-2xl font-bold outline-none focus:ring-2 focus:ring-amber-400"
+                  className="mt-1 w-full p-4 bg-[#2a2a2a] border border-white/5 rounded-2xl font-bold outline-none focus:border-white/10 text-white placeholder:text-gray-600"
+                  placeholder="Ex: Bebidas, Pizzas..."
                   value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ex: Pratos Principais, Bebidas, Sobremesas..."
                 />
               </label>
             </div>
 
-            <div className="p-6 bg-gray-50 flex space-x-3">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-black text-white py-4 rounded-2xl font-black uppercase flex items-center justify-center space-x-2 disabled:opacity-50"
-              >
-                <Save size={18} />
-                <span>{loading ? 'Salvando...' : 'Salvar'}</span>
-              </button>
+            <div className="p-6 bg-[#2a2a2a] border-t border-white/10 flex space-x-3">
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 bg-gray-200 text-gray-700 py-4 rounded-2xl font-black uppercase"
+                className="flex-1 py-4 rounded-2xl font-bold text-gray-400 hover:bg-white/5 transition-colors"
               >
                 Cancelar
+              </button>
+              <button
+                type="submit"
+                className="flex-1 py-4 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg"
+              >
+                {formData.id ? 'Salvar Alterações' : 'Criar Categoria'}
               </button>
             </div>
           </form>
