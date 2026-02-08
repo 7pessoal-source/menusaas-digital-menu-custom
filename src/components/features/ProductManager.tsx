@@ -12,12 +12,14 @@ import {
   Image as ImageIcon 
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
+import ExtrasManager from './ExtrasManager';
 
 const ProductManager: React.FC = () => {
   const { currentRestaurant, categories } = useRestaurantStore();
   const { products, saveProduct, removeProduct } = useProducts();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Product>>({});
+  const [selectedProductForExtras, setSelectedProductForExtras] = useState<Product | null>(null);
   const productImageRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,7 +137,15 @@ const ProductManager: React.FC = () => {
                     R$ {Number(p.price).toFixed(2)}
                   </span>
                 </div>
-                <p className="text-gray-400 text-sm line-clamp-2">{p.description}</p>
+                <p className="text-gray-400 text-sm line-clamp-2 mb-4">{p.description}</p>
+                
+                <button
+                  onClick={() => setSelectedProductForExtras(p)}
+                  className="w-full bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-2 rounded-xl font-bold flex items-center justify-center hover:bg-amber-500/20 transition-all"
+                >
+                  <PlusCircle size={16} className="mr-2" />
+                  Gerenciar Adicionais
+                </button>
               </div>
             </div>
           ))
@@ -296,6 +306,13 @@ const ProductManager: React.FC = () => {
             </div>
           </form>
         </div>
+      )}
+
+      {selectedProductForExtras && (
+        <ExtrasManager
+          product={selectedProductForExtras}
+          onClose={() => setSelectedProductForExtras(null)}
+        />
       )}
     </div>
   );
