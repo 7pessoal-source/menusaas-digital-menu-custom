@@ -8,13 +8,12 @@ import {
   ArrowLeft, 
   X as XIcon, 
   AlertCircle, 
-  Star,
   CreditCard,
   QrCode,
   Banknote,
   Store as StoreIcon,
-  Sparkles,
-  Flame
+  Flame,
+  ShoppingBag
 } from 'lucide-react';
 import { Restaurant, Category, Product, OrderItem } from '../../types';
 
@@ -35,19 +34,11 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
   const [cart, setCart] = useState<Map<string, number>>(new Map());
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [scrollY, setScrollY] = useState(0);
   
   // Checkout States
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'Cartão' | 'Pix' | 'Dinheiro' | ''>('');
-
-  // Parallax effect
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const effectiveIsOpen = Boolean(restaurant.isOpen);
   const allowsDelivery = Boolean(restaurant.allows_delivery);
@@ -98,7 +89,7 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
       const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             p.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = activeCategory === 'all' || p.category_id === activeCategory;
-      return matchesSearch && matchesCategory;
+      return matchesSearch && matchesCategory && p.is_available;
     })
     .sort((a, b) => {
       if (a.is_promotion && !b.is_promotion) return -1;
@@ -137,238 +128,170 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 pb-32 text-gray-900 transition-all duration-500 ${!effectiveIsOpen ? 'grayscale-[0.5]' : ''}`}>
-      {/* Alert de fechado com gradiente animado */}
+    <div className={`min-h-screen bg-[#1a1a1a] pb-32 text-white ${!effectiveIsOpen ? 'opacity-60' : ''}`}>
+      {/* Alert de fechado */}
       {!effectiveIsOpen && (
-        <div className="bg-gradient-to-r from-red-600 via-red-500 to-red-600 text-white text-center py-4 px-4 sticky top-0 z-[60] font-black flex items-center justify-center shadow-2xl animate-pulse">
-           <AlertCircle size={20} className="mr-2 animate-bounce" /> 
-           <span className="tracking-wider">RESTAURANTE FECHADO AGORA</span>
+        <div className="bg-red-600/90 backdrop-blur-sm text-white text-center py-3 px-4 sticky top-0 z-[60] font-bold flex items-center justify-center">
+           <AlertCircle size={18} className="mr-2" /> 
+           RESTAURANTE FECHADO
         </div>
       )}
 
-      {/* Header com Parallax e gradiente */}
-      <header className="relative bg-gradient-to-br from-black via-gray-900 to-black text-white overflow-hidden">
-        {/* Cover com parallax */}
-        <div 
-          className="h-72 w-full relative overflow-hidden"
-          style={{ transform: `translateY(${scrollY * 0.5}px)` }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black z-10" />
-          <img 
-            src={restaurant.cover_image || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000"} 
-            className="w-full h-full object-cover scale-110 transition-transform duration-700 hover:scale-125" 
-            alt="Banner" 
-          />
-          {/* Overlay com efeito glassmorphism */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10" />
-        </div>
-
-        {/* Botão voltar com glassmorphism */}
-        <div className="absolute top-6 left-6 z-20">
-           <button 
-             onClick={onExit} 
-             className="group p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl"
-           >
-             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-           </button>
-        </div>
-
-        {/* Info do restaurante */}
-        <div className="px-6 -mt-16 relative z-20 pb-8">
-          {/* Logo com animação e borda gradiente */}
-          <div className="relative inline-block mb-4 group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400 rounded-[28px] blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse" />
-            <div className="relative bg-white p-3 rounded-3xl shadow-2xl">
-              {restaurant.logo ? (
-                <img 
-                  src={restaurant.logo} 
-                  className="w-28 h-28 rounded-2xl object-cover transition-transform duration-300 group-hover:scale-105" 
-                  alt="Logo" 
-                />
-              ) : (
-                <div className="w-28 h-28 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center text-gray-400">
-                  <StoreIcon size={40} />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Nome e descrição */}
-          <h1 className="text-4xl font-black mb-2 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-            {restaurant.name}
-          </h1>
-          {restaurant.description && (
-            <p className="text-gray-300 text-sm mb-4 max-w-lg leading-relaxed">
-              {restaurant.description}
-            </p>
-          )}
-
-          {/* Badges informativos com gradiente */}
-          <div className="flex flex-wrap gap-3 mb-6">
-            <div className="flex items-center bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-green-400/30">
-              <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse" />
-              <span className="text-green-300 text-xs font-bold">
-                {effectiveIsOpen ? 'Aberto Agora' : 'Fechado'}
-              </span>
-            </div>
-            {restaurant.min_order_value > 0 && (
-              <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                <span className="text-amber-400 text-xs font-bold">
-                  Pedido mín: R$ {Number(restaurant.min_order_value).toFixed(2)}
-                </span>
-              </div>
-            )}
-            {allowsDelivery && (
-              <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                <MapPin size={14} className="mr-1.5 text-amber-400" />
-                <span className="text-white text-xs font-bold">Delivery disponível</span>
-              </div>
+      {/* Header com busca */}
+      <div className="sticky top-0 z-50 bg-[#1a1a1a]/95 backdrop-blur-xl border-b border-white/5">
+        <div className="px-5 py-4">
+          {/* Logo e voltar */}
+          <div className="flex items-center justify-between mb-4">
+            <button 
+              onClick={onExit}
+              className="p-2 hover:bg-white/5 rounded-xl transition-all active:scale-95"
+            >
+              <ArrowLeft size={24} />
+            </button>
+            
+            {restaurant.logo && (
+              <img 
+                src={restaurant.logo} 
+                className="h-10 w-10 rounded-xl object-cover" 
+                alt={restaurant.name} 
+              />
             )}
           </div>
-        </div>
-      </header>
 
-      {/* Busca com efeito glassmorphism */}
-      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-lg">
-        <div className="px-6 py-4">
-          <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          {/* Busca */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
             <input
               type="text"
-              placeholder="Buscar no cardápio..."
+              placeholder="Search your favourites..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl font-semibold text-gray-800 outline-none border-2 border-transparent focus:border-amber-400 focus:bg-white transition-all duration-300 shadow-sm hover:shadow-md placeholder:text-gray-400"
+              className="w-full pl-12 pr-12 py-3.5 bg-[#2a2a2a] rounded-2xl text-white placeholder:text-gray-500 outline-none border border-white/5 focus:border-white/10 transition-all"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full transition-all"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-lg transition-all"
               >
-                <XIcon size={16} className="text-gray-400" />
+                <XIcon size={18} className="text-gray-500" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Categorias scrolláveis */}
-        <div className="px-6 pb-4 overflow-x-auto scrollbar-hide">
+        {/* Categorias */}
+        <div className="overflow-x-auto scrollbar-hide px-5 pb-4">
           <div className="flex space-x-3 min-w-max">
             {menuCategories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-6 py-3 rounded-2xl font-bold text-sm whitespace-nowrap transition-all duration-300 ${
+                className={`flex flex-col items-center justify-center px-5 py-3 rounded-2xl transition-all ${
                   activeCategory === cat.id
-                    ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-black shadow-lg shadow-amber-400/30 scale-105'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:scale-105 active:scale-95'
+                    ? 'bg-white/10 border border-white/20'
+                    : 'bg-[#2a2a2a] border border-white/5 hover:bg-white/5'
                 }`}
               >
-                {cat.name}
+                <span className="text-2xl mb-1">
+                  {cat.id === 'all' ? '✨' : '🍽️'}
+                </span>
+                <span className="text-xs font-semibold whitespace-nowrap">
+                  {cat.name.replace('✨ ', '')}
+                </span>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Lista de produtos em GRID de 4 colunas com efeito flutuante */}
-      <div className="px-6 py-8 max-w-7xl mx-auto">
+      {/* Grid de produtos - 2 colunas */}
+      <div className="px-5 py-6">
         {filteredProducts.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="text-gray-400" size={32} />
+            <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="text-gray-600" size={32} />
             </div>
-            <p className="text-gray-400 font-bold text-lg">Nenhum produto encontrado</p>
-            <p className="text-gray-400 text-sm mt-2">Tente outra busca ou categoria</p>
+            <p className="text-gray-400 font-semibold text-lg">No items found</p>
+            <p className="text-gray-600 text-sm mt-2">Try another search</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 gap-4">
             {filteredProducts.map((product, index) => (
               <div
                 key={product.id}
-                className="group bg-white rounded-[40px] p-5 shadow-xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all duration-500 border border-gray-100 hover:border-amber-200 relative overflow-hidden hover:-translate-y-3 flex flex-col"
+                className="group bg-[#2a2a2a]/50 backdrop-blur-sm rounded-3xl p-4 border border-white/5 hover:border-white/10 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
                 style={{
-                  animation: `fadeInUp 0.5s ease-out ${index * 0.05}s both`
+                  animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`
                 }}
               >
                 {/* Badge de promoção */}
                 {product.is_promotion && (
-                  <div className="absolute top-4 left-4 z-10">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur animate-pulse" />
-                      <div className="relative bg-gradient-to-r from-red-500 to-orange-500 px-4 py-1.5 rounded-full flex items-center space-x-1 shadow-lg">
-                        <Flame size={14} className="text-white animate-pulse" />
-                        <span className="text-white text-[10px] font-black uppercase tracking-wider">Promoção</span>
-                      </div>
+                  <div className="absolute top-3 right-3 z-10">
+                    <div className="bg-gradient-to-r from-orange-500 to-red-500 p-2 rounded-full shadow-lg">
+                      <Flame size={14} className="text-white" />
                     </div>
                   </div>
                 )}
 
-                {/* Imagem do produto com proporção 4:3 e efeito hover */}
-                <div className="aspect-[4/3] w-full rounded-[32px] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 relative group-hover:scale-[1.02] transition-transform duration-500 mb-5">
+                {/* Imagem */}
+                <div className="w-full aspect-square rounded-2xl overflow-hidden bg-[#1a1a1a] mb-3 flex items-center justify-center">
                   {product.image ? (
                     <img 
                       src={product.image} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                       alt={product.name} 
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300">
-                      <StoreIcon size={48} />
-                    </div>
+                    <StoreIcon size={40} className="text-gray-700" />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
 
-                {/* Info do produto */}
-                <div className="flex-1 flex flex-col">
-                  <h3 className="font-black text-xl text-gray-900 leading-tight group-hover:text-amber-600 transition-colors mb-2">
+                {/* Info */}
+                <div className="space-y-2">
+                  <h3 className="font-bold text-base text-white leading-tight line-clamp-1">
                     {product.name}
                   </h3>
-                  <p className="text-gray-500 text-sm leading-relaxed line-clamp-2 mb-6 flex-1">
+                  <p className="text-gray-400 text-xs leading-relaxed line-clamp-2">
                     {product.description}
                   </p>
                   
-                  <div className="flex items-center justify-between mt-auto">
-                    {/* Preço */}
-                    <span className="text-2xl font-black bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                      R$ {Number(product.price).toFixed(2)}
+                  {/* Preço e botão */}
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-orange-500 text-xl font-bold">
+                      ${Number(product.price).toFixed(2)}
                     </span>
 
-                    {/* Botão de adicionar */}
-                    <div className="flex items-center bg-gray-50 rounded-2xl p-1 border border-gray-100 group-hover:border-amber-300 transition-all">
-                      {cart.has(product.id) ? (
-                        <div className="flex items-center">
-                          <button 
-                            onClick={() => removeFromCart(product.id)} 
-                            className="p-2 bg-white rounded-xl text-amber-500 shadow-sm hover:shadow-md transition-all hover:scale-110 active:scale-95"
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="px-3 font-black text-sm min-w-[30px] text-center">
-                            {cart.get(product.id)}
-                          </span>
-                          <button 
-                            onClick={() => addToCart(product.id)} 
-                            className="p-2 bg-gradient-to-r from-amber-400 to-orange-400 rounded-xl text-white shadow-md hover:shadow-lg transition-all hover:scale-110 active:scale-95"
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-                      ) : (
+                    {cart.has(product.id) ? (
+                      <div className="flex items-center bg-[#1a1a1a] rounded-xl p-1 border border-white/10">
+                        <button 
+                          onClick={() => removeFromCart(product.id)} 
+                          className="p-2 hover:bg-white/5 rounded-lg transition-all"
+                        >
+                          <Minus size={14} className="text-orange-500" />
+                        </button>
+                        <span className="px-3 font-bold text-sm text-white">
+                          {cart.get(product.id)}
+                        </span>
                         <button 
                           onClick={() => addToCart(product.id)} 
-                          disabled={!effectiveIsOpen} 
-                          className={`p-2.5 rounded-xl font-black text-xs uppercase flex items-center shadow-md transition-all duration-300 ${
-                            effectiveIsOpen 
-                              ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-white hover:shadow-lg hover:scale-110 active:scale-95' 
-                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                          }`}
+                          className="p-2 bg-orange-500 hover:bg-orange-600 rounded-lg transition-all"
                         >
-                          <Plus size={18} />
+                          <Plus size={14} className="text-white" />
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => addToCart(product.id)} 
+                        disabled={!effectiveIsOpen}
+                        className={`p-2.5 rounded-xl transition-all ${
+                          effectiveIsOpen
+                            ? 'bg-orange-500 hover:bg-orange-600 active:scale-95'
+                            : 'bg-gray-700 cursor-not-allowed'
+                        }`}
+                      >
+                        <Plus size={18} className="text-white" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -379,102 +302,71 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
 
       {/* Botão do carrinho flutuante */}
       {cartItemsCount > 0 && !isCartOpen && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-xl px-6 z-40">
+        <div className="fixed bottom-6 left-5 right-5 z-40">
           <button 
             onClick={() => setIsCartOpen(true)} 
-            className={`w-full p-6 rounded-[32px] flex items-center justify-between shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-500 transform hover:scale-105 active:scale-95 ${
+            className={`w-full p-5 rounded-2xl flex items-center justify-between shadow-2xl transition-all ${
               isBelowMinOrder 
-                ? 'bg-gradient-to-r from-gray-700 to-gray-800 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-black via-gray-900 to-black hover:shadow-amber-400/20'
+                ? 'bg-gray-700 cursor-not-allowed' 
+                : 'bg-orange-500 hover:bg-orange-600'
             }`}
           >
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-orange-400 rounded-2xl blur animate-pulse" />
-                <div className="relative bg-gradient-to-r from-amber-400 to-orange-400 text-black w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-lg">
-                  {cartItemsCount}
-                </div>
+            <div className="flex items-center space-x-3">
+              <div className="bg-white/20 backdrop-blur-sm w-10 h-10 rounded-xl flex items-center justify-center font-black">
+                {cartItemsCount}
               </div>
-              <div className="text-left">
-                <span className="font-black text-base uppercase tracking-wider text-white block">
-                  Ver Carrinho
-                </span>
-                <span className="text-xs text-gray-400 font-bold">
-                  {cartItemsCount} {cartItemsCount === 1 ? 'item' : 'itens'}
-                </span>
-              </div>
+              <span className="font-bold text-white">View Cart</span>
             </div>
-            <div className="text-right">
-              <span className="font-black text-2xl bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent block leading-none">
-                R$ {cartTotal.toFixed(2)}
-              </span>
-              {isBelowMinOrder && (
-                <span className="text-[10px] text-white/50 font-bold uppercase mt-1 block">
-                  Abaixo do mínimo
-                </span>
-              )}
-            </div>
+            <span className="font-black text-xl text-white">
+              R$ {cartTotal.toFixed(2)}
+            </span>
           </button>
         </div>
       )}
 
       {/* Modal do carrinho */}
       {isCartOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-lg z-[100] flex items-end justify-center animate-in fade-in duration-300">
-          <div className="bg-gradient-to-b from-white to-gray-50 w-full max-w-2xl rounded-t-[40px] h-[94vh] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-500">
-            <div className="p-8 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-end justify-center">
+          <div className="bg-[#1a1a1a] w-full max-w-2xl rounded-t-[40px] h-[94vh] flex flex-col overflow-hidden border-t border-white/10">
+            {/* Header */}
+            <div className="p-6 border-b border-white/10 flex justify-between items-center">
               <div>
-                <h2 className="text-3xl font-black uppercase tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                  Finalizar Pedido
-                </h2>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1">
-                  {restaurant.name}
-                </p>
+                <h2 className="text-2xl font-black text-white">Finalizar Pedido</h2>
+                <p className="text-xs text-gray-400 font-semibold mt-1">{restaurant.name}</p>
               </div>
               <button 
                 onClick={() => setIsCartOpen(false)} 
-                className="p-3 bg-white border-2 border-gray-200 rounded-2xl text-gray-400 hover:text-black hover:border-gray-300 transition-all hover:scale-110 active:scale-95 shadow-sm"
+                className="p-3 bg-white/5 rounded-2xl text-gray-400 hover:text-white hover:bg-white/10 transition-all"
               >
                 <XIcon size={24} />
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-8 space-y-6">
+            {/* Conteúdo */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Items */}
               <div className="space-y-3">
                 {Array.from(cart.entries()).map(([id, qty]) => {
                   const p = products.find(prod => prod.id === id)!;
                   return (
-                    <div 
-                      key={id} 
-                      className="flex justify-between items-center bg-white p-5 rounded-3xl border-2 border-gray-100 hover:border-amber-200 hover:shadow-lg transition-all duration-300 group"
-                    >
+                    <div key={id} className="flex justify-between items-center bg-[#2a2a2a]/50 p-4 rounded-2xl border border-white/5">
                       <div className="flex-1">
-                        <h4 className="font-black text-gray-800 group-hover:text-amber-600 transition-colors">
-                          {p.name}
-                        </h4>
-                        <p className="text-xs font-bold text-amber-600 mt-1">
-                          Unitário: R$ {Number(p.price).toFixed(2)}
+                        <h4 className="font-bold text-white">{p.name}</h4>
+                        <p className="text-xs font-semibold text-orange-500 mt-1">
+                          R$ {Number(p.price).toFixed(2)}
                         </p>
                       </div>
                       <div className="flex items-center space-x-4">
-                        <div className="flex items-center bg-gray-50 rounded-2xl p-2 border-2 border-gray-200 group-hover:border-amber-300 transition-all">
-                          <button 
-                            onClick={() => removeFromCart(id)} 
-                            className="p-2 text-amber-500 hover:bg-white rounded-lg transition-all hover:scale-110 active:scale-95"
-                          >
-                            <Minus size={14} />
+                        <div className="flex items-center bg-[#1a1a1a] rounded-xl p-1 border border-white/10">
+                          <button onClick={() => removeFromCart(id)} className="p-2 hover:bg-white/5 rounded-lg">
+                            <Minus size={14} className="text-orange-500" />
                           </button>
-                          <span className="px-4 font-black text-base">
-                            {qty}
-                          </span>
-                          <button 
-                            onClick={() => addToCart(id)} 
-                            className="p-2 bg-gradient-to-r from-amber-400 to-orange-400 rounded-lg text-white transition-all hover:scale-110 active:scale-95 shadow-sm"
-                          >
-                            <Plus size={14} />
+                          <span className="px-3 font-bold text-sm text-white">{qty}</span>
+                          <button onClick={() => addToCart(id)} className="p-2 bg-orange-500 rounded-lg">
+                            <Plus size={14} className="text-white" />
                           </button>
                         </div>
-                        <span className="font-black text-gray-900 min-w-[90px] text-right text-lg">
+                        <span className="font-bold text-white min-w-[80px] text-right">
                           R$ {(Number(p.price) * qty).toFixed(2)}
                         </span>
                       </div>
@@ -483,54 +375,41 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                 })}
               </div>
 
-              <div className="pt-6 space-y-6">
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-1.5 bg-gradient-to-b from-amber-400 to-orange-400 rounded-full" />
-                  <h3 className="font-black text-xl uppercase tracking-tight">Seus Dados</h3>
-                </div>
+              {/* Formulário */}
+              <div className="space-y-5">
+                <h3 className="font-black text-lg text-white">Seus Dados</h3>
                 
-                <div className="space-y-4">
-                  <input 
-                    type="text" 
-                    placeholder="Digite seu nome completo *" 
-                    className="w-full p-5 bg-gray-50 rounded-2xl font-bold outline-none border-2 border-gray-200 focus:border-amber-400 focus:bg-white transition-all shadow-sm hover:shadow-md" 
-                    value={customerName} 
-                    onChange={(e) => setCustomerName(e.target.value)} 
-                  />
-                  
-                  {allowsDelivery ? (
-                    <div className="relative">
-                      <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-amber-500" size={20} />
-                      <input 
-                        type="text" 
-                        placeholder="Endereço Completo com Bairro *" 
-                        className="w-full p-5 pl-14 bg-gray-50 rounded-2xl font-bold outline-none border-2 border-gray-200 focus:border-amber-400 focus:bg-white transition-all shadow-sm hover:shadow-md" 
-                        value={customerAddress} 
-                        onChange={(e) => setCustomerAddress(e.target.value)} 
-                      />
-                    </div>
-                  ) : (
-                    <div className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 flex flex-col space-y-3 text-amber-900 shadow-inner">
-                      <div className="flex items-center space-x-2 font-black uppercase text-sm">
-                        <StoreIcon size={18} /> 
-                        <span>Retirada no Local</span>
-                      </div>
-                      <p className="text-[11px] font-bold opacity-70 uppercase tracking-widest">
-                        Endereço para retirada:
-                      </p>
-                      <p className="font-black text-base leading-tight">
-                        {restaurant.address}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="pt-4 space-y-5">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-8 w-1.5 bg-gradient-to-b from-amber-400 to-orange-400 rounded-full" />
-                    <h3 className="font-black text-xl uppercase tracking-tight">Pagamento</h3>
+                <input 
+                  type="text" 
+                  placeholder="Nome completo *" 
+                  className="w-full p-4 bg-[#2a2a2a] rounded-2xl text-white placeholder:text-gray-500 outline-none border border-white/5 focus:border-white/10" 
+                  value={customerName} 
+                  onChange={(e) => setCustomerName(e.target.value)} 
+                />
+                
+                {allowsDelivery ? (
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" size={20} />
+                    <input 
+                      type="text" 
+                      placeholder="Endereço completo *" 
+                      className="w-full p-4 pl-12 bg-[#2a2a2a] rounded-2xl text-white placeholder:text-gray-500 outline-none border border-white/5 focus:border-white/10" 
+                      value={customerAddress} 
+                      onChange={(e) => setCustomerAddress(e.target.value)} 
+                    />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                ) : (
+                  <div className="p-4 bg-orange-500/10 rounded-2xl border border-orange-500/20">
+                    <p className="text-orange-500 text-sm font-bold">
+                      <StoreIcon size={16} className="inline mr-2" />
+                      Retirada: {restaurant.address}
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="font-black text-lg text-white mb-3">Pagamento</h3>
+                  <div className="grid grid-cols-3 gap-3">
                     {[
                       { id: 'Cartão', icon: CreditCard },
                       { id: 'Pix', icon: QrCode },
@@ -539,16 +418,14 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                       <button 
                         key={method.id}
                         onClick={() => setPaymentMethod(method.id as any)}
-                        className={`flex flex-col items-center justify-center p-5 rounded-3xl border-2 transition-all duration-300 space-y-3 ${
+                        className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${
                           paymentMethod === method.id 
-                            ? 'bg-gradient-to-br from-amber-400 to-orange-400 border-amber-400 text-white shadow-2xl shadow-amber-400/30 scale-110' 
-                            : 'bg-white border-gray-200 text-gray-400 hover:border-amber-200 hover:shadow-lg hover:scale-105'
+                            ? 'bg-orange-500 border-orange-500 text-white' 
+                            : 'bg-[#2a2a2a] border-white/5 text-gray-400 hover:border-white/10'
                         }`}
                       >
-                        <method.icon size={28} strokeWidth={2.5} />
-                        <span className="text-xs font-black uppercase tracking-widest">
-                          {method.id}
-                        </span>
+                        <method.icon size={24} />
+                        <span className="text-xs font-bold mt-2">{method.id}</span>
                       </button>
                     ))}
                   </div>
@@ -556,45 +433,36 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
               </div>
 
               {isBelowMinOrder && (
-                <div className="p-5 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-2xl flex items-center space-x-4 text-red-700 shadow-lg animate-in fade-in zoom-in duration-300">
-                  <AlertCircle size={24} className="shrink-0 animate-pulse" />
-                  <div>
-                    <p className="text-sm font-black uppercase tracking-tight">
-                      Pedido mínimo: R$ {Number(restaurant.min_order_value).toFixed(2)}
-                    </p>
-                    <p className="text-xs font-bold opacity-80 mt-1">
-                      Faltam R$ {(restaurant.min_order_value - cartTotal).toFixed(2)}
-                    </p>
-                  </div>
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+                  <p className="text-red-500 text-sm font-bold">
+                    <AlertCircle size={16} className="inline mr-2" />
+                    Pedido mínimo: R$ {Number(restaurant.min_order_value).toFixed(2)}
+                  </p>
                 </div>
               )}
             </div>
 
-            <div className="p-8 bg-gradient-to-r from-black via-gray-900 to-black border-t border-gray-800">
-              <div className="flex justify-between items-center text-white mb-6">
-                <span className="font-bold text-gray-400 uppercase text-xs tracking-widest">
-                  Total do Pedido
-                </span>
-                <span className="text-4xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
+            {/* Footer */}
+            <div className="p-6 bg-[#2a2a2a] border-t border-white/10">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-gray-400 text-sm font-semibold">Total</span>
+                <span className="text-3xl font-black text-orange-500">
                   R$ {cartTotal.toFixed(2)}
                 </span>
               </div>
               <button 
                 onClick={handleSubmitOrder} 
                 disabled={isFormInvalid() || isBelowMinOrder}
-                className={`w-full p-6 rounded-3xl font-black text-lg uppercase tracking-widest shadow-2xl transition-all duration-300 flex items-center justify-center space-x-3 ${
+                className={`w-full p-5 rounded-2xl font-bold text-lg transition-all flex items-center justify-center space-x-2 ${
                   isFormInvalid() || isBelowMinOrder 
-                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50' 
-                    : 'bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 text-black hover:scale-105 hover:shadow-amber-400/30 active:scale-95'
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                    : 'bg-orange-500 hover:bg-orange-600 text-white'
                 }`}
               >
                 <span>
-                  {isBelowMinOrder 
-                    ? 'Adicione mais itens' 
-                    : (isFormInvalid() ? 'Preencha os dados' : 'Enviar Pedido')
-                  }
+                  {isBelowMinOrder ? 'Adicione mais itens' : (isFormInvalid() ? 'Preencha os dados' : 'Enviar Pedido')}
                 </span>
-                {!isFormInvalid() && !isBelowMinOrder && <ChevronRight size={24} />}
+                {!isFormInvalid() && !isBelowMinOrder && <ChevronRight size={20} />}
               </button>
             </div>
           </div>
