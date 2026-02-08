@@ -9,10 +9,12 @@ import {
   X, 
   Upload, 
   Star,
-  Image as ImageIcon 
+  Image as ImageIcon,
+  Settings 
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import ExtrasManager from './ExtrasManager';
+import VariationsManager from './VariationsManager'; // NOVO!
 
 const ProductManager: React.FC = () => {
   const { currentRestaurant, categories } = useRestaurantStore();
@@ -20,6 +22,7 @@ const ProductManager: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Product>>({});
   const [selectedProductForExtras, setSelectedProductForExtras] = useState<Product | null>(null);
+  const [selectedProductForVariations, setSelectedProductForVariations] = useState<Product | null>(null); // NOVO!
   const productImageRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -220,13 +223,24 @@ const ProductManager: React.FC = () => {
                 </div>
                 <p className="text-gray-400 text-sm line-clamp-2 mb-4">{p.description}</p>
                 
-                <button
-                  onClick={() => setSelectedProductForExtras(p)}
-                  className="w-full bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-2 rounded-xl font-bold flex items-center justify-center hover:bg-amber-500/20 transition-all"
-                >
-                  <PlusCircle size={16} className="mr-2" />
-                  Gerenciar Adicionais
-                </button>
+                {/* NOVO: Botões de Gerenciamento */}
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setSelectedProductForVariations(p)}
+                    className="w-full bg-orange-500/10 border border-orange-500/30 text-orange-400 px-4 py-2 rounded-xl font-bold flex items-center justify-center hover:bg-orange-500/20 transition-all"
+                  >
+                    <Settings size={16} className="mr-2" />
+                    Variações (Tamanhos)
+                  </button>
+                  
+                  <button
+                    onClick={() => setSelectedProductForExtras(p)}
+                    className="w-full bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-2 rounded-xl font-bold flex items-center justify-center hover:bg-amber-500/20 transition-all"
+                  >
+                    <PlusCircle size={16} className="mr-2" />
+                    Adicionais
+                  </button>
+                </div>
               </div>
             </div>
           ))
@@ -304,7 +318,7 @@ const ProductManager: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <label className="block">
-                  <span className="text-xs font-bold text-gray-400 uppercase ml-1">Preço (R$)</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase ml-1">Preço Base (R$)</span>
                   <input
                     type="number"
                     step="0.01"
@@ -315,6 +329,9 @@ const ProductManager: React.FC = () => {
                       setFormData({ ...formData, price: parseFloat(e.target.value) })
                     }
                   />
+                  <p className="text-xs text-gray-500 mt-1 ml-1">
+                    Este será o menor preço do produto
+                  </p>
                 </label>
 
                 <label className="block">
@@ -389,10 +406,19 @@ const ProductManager: React.FC = () => {
         </div>
       )}
 
+      {/* MODAL DE ADICIONAIS */}
       {selectedProductForExtras && (
         <ExtrasManager
           product={selectedProductForExtras}
           onClose={() => setSelectedProductForExtras(null)}
+        />
+      )}
+
+      {/* NOVO: MODAL DE VARIAÇÕES */}
+      {selectedProductForVariations && (
+        <VariationsManager
+          product={selectedProductForVariations}
+          onClose={() => setSelectedProductForVariations(null)}
         />
       )}
     </div>

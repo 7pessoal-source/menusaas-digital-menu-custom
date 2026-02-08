@@ -32,7 +32,6 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
   onExit
 }) => {
   const [activeCategory, setActiveCategory] = useState('all');
-  const [cart, setCart] = useState<Map<string, number>>(new Map());
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -53,25 +52,7 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
     ...categories
   ], [categories, restaurant.id]);
 
-  const addToCart = (productId: string) => {
-    if (!effectiveIsOpen) return;
-    setCart((prev) => {
-      const newCart = new Map<string, number>(prev);
-      const currentQty = newCart.get(productId) || 0;
-      newCart.set(productId, currentQty + 1);
-      return newCart;
-    });
-  };
-
-  const removeFromCart = (productId: string) => {
-    setCart((prev) => {
-      const newCart = new Map<string, number>(prev);
-      const current = newCart.get(productId) || 0;
-      if (current <= 1) newCart.delete(productId);
-      else newCart.set(productId, current - 1);
-      return newCart;
-    });
-  };
+  // Funções de carrinho atualizadas para usar cartItems diretamente
 
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
@@ -80,19 +61,12 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
 
   const handleAddToCart = (item: CartItem) => {
     setCartItems((prev) => [...prev, item]);
-    // Aqui você pode adicionar lógica adicional, como mostrar toast de sucesso
     console.log('Item adicionado ao carrinho:', item);
-    
-    // Mantendo compatibilidade com o contador do carrinho atual
-    addToCart(item.product.id);
   };
 
-  const cartTotal: number = [...cart].reduce((sum, [id, qty]) => {
-    const product = products.find(p => p.id === id);
-    return sum + (Number(product?.price) || 0) * qty;
-  }, 0);
+  const cartTotal: number = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
 
-  const cartItemsCount: number = [...cart.values()].reduce((sum, qty) => sum + qty, 0);
+  const cartItemsCount: number = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const isBelowMinOrder = cartTotal < (restaurant.min_order_value || 0);
   
@@ -120,21 +94,31 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
     e.preventDefault();
     if (isFormInvalid() || isBelowMinOrder || !effectiveIsOpen) return;
 
-    const items: OrderItem[] = Array.from(cart.entries()).map(([id, qty]) => {
-      const p = products.find(prod => prod.id === id)!;
-      return {
-        productId: id,
-        productName: p.name,
-        quantity: qty,
-        price: Number(p.price)
-      };
-    });
-
     const serviceType = allowsDelivery ? '✅ ENTREGA EM CASA' : '✅ RETIRADA NO LOCAL';
     const addressDetails = allowsDelivery ? `\n📍 *Endereço:* ${customerAddress}` : `\n📍 *Ponto de Retirada:* ${restaurant.address}`;
 
+    const itemsText = cartItems.map(item => {
+      let text = `• ${item.quantity}x ${item.product.name}`;
+      
+      if (item.selectedVariations.length > 0) {
+        const variations = item.selectedVariations.map(v => `${v.group_name}: ${v.option_name}`).join(', ');
+        text += ` (${variations})`;
+      }
+      
+      if (item.selectedExtras.length > 0) {
+        const extras = item.selectedExtras.map(e => e.name).join(', ');
+        text += `\n  + Adicionais: ${extras}`;
+      }
+      
+      if (item.observations) {
+        text += `\n  Obs: ${item.observations}`;
+      }
+      
+      return text;
+    }).join('\n');
+
     const message = `*🍕 NOVO PEDIDO - ${restaurant.name}*\n\n` +
-      `*Itens:*\n${items.map(i => `• ${i.quantity}x ${i.productName}`).join('\n')}\n\n` +
+      `*Itens:*\n${itemsText}\n\n` +
       `💰 *Total:* R$ ${cartTotal.toFixed(2)}\n\n` +
       `*👤 Dados do Cliente:*\n` +
       `• Nome: ${customerName}\n` +
@@ -142,7 +126,7 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
       `• Modo: ${serviceType}${addressDetails}`;
 
     window.open(`https://wa.me/${restaurant.whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
-    setCart(new Map());
+    setCartItems([]);
     setIsCartOpen(false);
   };
 
@@ -308,37 +292,20 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                       ${Number(product.price).toFixed(2)}
                     </span>
 
-                    {cart.has(product.id) ? (
-                      <div className="flex items-center bg-[#1a1a1a] rounded-xl p-1 border border-white/10">
-                        <button 
-                          onClick={() => removeFromCart(product.id)} 
-                          className="p-2 hover:bg-white/5 rounded-lg transition-all"
-                        >
-                          <Minus size={14} className="text-orange-500" />
-                        </button>
-                        <span className="px-3 font-bold text-sm text-white">
-                          {cart.get(product.id)}
-                        </span>
-                        <button 
-                          onClick={() => addToCart(product.id)} 
-                          className="p-2 bg-orange-500 hover:bg-orange-600 rounded-lg transition-all"
-                        >
-                          <Plus size={14} className="text-white" />
-                        </button>
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={() => addToCart(product.id)} 
-                        disabled={!effectiveIsOpen}
-                        className={`p-2.5 rounded-xl transition-all ${
-                          effectiveIsOpen
-                            ? 'bg-orange-500 hover:bg-orange-600 active:scale-95'
-                            : 'bg-gray-700 cursor-not-allowed'
-                        }`}
-                      >
-                        <Plus size={18} className="text-white" />
-                      </button>
-                    )}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleProductClick(product);
+                      }} 
+                      disabled={!effectiveIsOpen}
+                      className={`p-2.5 rounded-xl transition-all ${
+                        effectiveIsOpen
+                          ? 'bg-orange-500 hover:bg-orange-600 active:scale-95'
+                          : 'bg-gray-700 cursor-not-allowed'
+                      }`}
+                    >
+                      <Plus size={18} className="text-white" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -393,33 +360,72 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* Items */}
               <div className="space-y-3">
-                {Array.from(cart.entries()).map(([id, qty]) => {
-                  const p = products.find(prod => prod.id === id)!;
-                  return (
-                    <div key={id} className="flex justify-between items-center bg-[#2a2a2a]/50 p-4 rounded-2xl border border-white/5">
+                {cartItems.map((item, index) => (
+                  <div key={index} className="bg-[#2a2a2a]/50 p-4 rounded-2xl border border-white/5 space-y-3">
+                    <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h4 className="font-bold text-white">{p.name}</h4>
-                        <p className="text-xs font-semibold text-orange-500 mt-1">
-                          R$ {Number(p.price).toFixed(2)}
-                        </p>
+                        <h4 className="font-bold text-white">{item.product.name}</h4>
+                        {item.selectedVariations.map(v => (
+                          <p key={v.group_id} className="text-xs text-gray-400">
+                            {v.group_name}: <span className="text-orange-400">{v.option_name}</span>
+                          </p>
+                        ))}
+                        {item.selectedExtras.length > 0 && (
+                          <p className="text-xs text-gray-400">
+                            Adicionais: <span className="text-amber-400">{item.selectedExtras.map(e => e.name).join(', ')}</span>
+                          </p>
+                        )}
                       </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center bg-[#1a1a1a] rounded-xl p-1 border border-white/10">
-                          <button onClick={() => removeFromCart(id)} className="p-2 hover:bg-white/5 rounded-lg">
-                            <Minus size={14} className="text-orange-500" />
-                          </button>
-                          <span className="px-3 font-bold text-sm text-white">{qty}</span>
-                          <button onClick={() => addToCart(id)} className="p-2 bg-orange-500 rounded-lg">
-                            <Plus size={14} className="text-white" />
-                          </button>
-                        </div>
-                        <span className="font-bold text-white min-w-[80px] text-right">
-                          R$ {(Number(p.price) * qty).toFixed(2)}
-                        </span>
-                      </div>
+                      <button 
+                        onClick={() => setCartItems(prev => prev.filter((_, i) => i !== index))}
+                        className="text-gray-500 hover:text-red-500 p-1"
+                      >
+                        <XIcon size={18} />
+                      </button>
                     </div>
-                  );
-                })}
+                    
+                    <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                      <div className="flex items-center bg-[#1a1a1a] rounded-xl p-1 border border-white/10">
+                        <button 
+                          onClick={() => {
+                            if (item.quantity > 1) {
+                              const newItems = [...cartItems];
+                              newItems[index] = { 
+                                ...item, 
+                                quantity: item.quantity - 1,
+                                totalPrice: (item.totalPrice / item.quantity) * (item.quantity - 1)
+                              };
+                              setCartItems(newItems);
+                            } else {
+                              setCartItems(prev => prev.filter((_, i) => i !== index));
+                            }
+                          }} 
+                          className="p-2 hover:bg-white/5 rounded-lg"
+                        >
+                          <Minus size={14} className="text-orange-500" />
+                        </button>
+                        <span className="px-3 font-bold text-sm text-white">{item.quantity}</span>
+                        <button 
+                          onClick={() => {
+                            const newItems = [...cartItems];
+                            newItems[index] = { 
+                              ...item, 
+                              quantity: item.quantity + 1,
+                              totalPrice: (item.totalPrice / item.quantity) * (item.quantity + 1)
+                            };
+                            setCartItems(newItems);
+                          }} 
+                          className="p-2 bg-orange-500 rounded-lg"
+                        >
+                          <Plus size={14} className="text-white" />
+                        </button>
+                      </div>
+                      <span className="font-bold text-white">
+                        R$ {item.totalPrice.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Formulário */}

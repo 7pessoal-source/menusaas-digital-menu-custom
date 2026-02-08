@@ -89,14 +89,54 @@ export interface ProductExtra {
   created_at?: string;
 }
 
-// Item do carrinho com extras
+// ========================================
+// NOVOS TIPOS: Sistema de Variações
+// ========================================
+
+// Grupo de variação (ex: "Tamanho", "Borda", "Massa")
+export interface ProductVariationGroup {
+  id: string;
+  product_id: string;
+  name: string; // Ex: "Tamanho", "Borda"
+  is_required: boolean; // Se o cliente DEVE escolher
+  allow_multiple: boolean; // Permite múltiplas seleções
+  display_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Opção de variação (ex: "Broto", "Média", "Grande")
+export interface ProductVariationOption {
+  id: string;
+  variation_group_id: string;
+  name: string; // Ex: "Broto (4 fatias)", "Grande (8 fatias)"
+  price_adjustment: number; // Valor a somar no preço base
+  is_default: boolean; // Opção padrão selecionada
+  is_available: boolean;
+  display_order: number;
+  created_at?: string;
+}
+
+// Variação selecionada pelo cliente no carrinho
+export interface SelectedVariation {
+  group_id: string;
+  group_name: string;
+  option_id: string;
+  option_name: string;
+  price_adjustment: number;
+}
+
+// Item do carrinho com extras E variações
 export interface CartItem {
   product: Product;
   quantity: number;
   selectedExtras: ProductExtra[];
+  selectedVariations: SelectedVariation[]; // NOVO!
   observations: string;
   totalPrice: number;
 }
+
+// ========================================
 
 // View Types
 export type ViewType = 'landing' | 'auth' | 'admin' | 'menu';
