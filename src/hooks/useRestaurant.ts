@@ -50,12 +50,45 @@ export const useRestaurant = () => {
         throw productsResult.error;
       }
 
+      // 🆕 CRIAR CATEGORIAS PADRÃO SE NÃO EXISTIREM
+      let categories = categoriesResult.data as Category[] || [];
+      
+      if (categories.length === 0) {
+        console.log('🔵 [DEFAULT CATEGORIES] Criando categorias padrão...');
+        
+        const defaultCategories = [
+          { name: '🍔 Lanches', order: 0 },
+          { name: '🍕 Pizzas', order: 1 },
+          { name: '🥤 Bebidas', order: 2 },
+          { name: '🍰 Sobremesas', order: 3 },
+          { name: '🍟 Porções', order: 4 }
+        ];
+
+        const categoriesToInsert = defaultCategories.map(cat => ({
+          restaurant_id: restaurantId,
+          name: cat.name,
+          order: cat.order
+        }));
+
+        const { data: newCategories, error: insertError } = await supabase
+          .from('categories')
+          .insert(categoriesToInsert)
+          .select();
+
+        if (insertError) {
+          console.error('❌ [DEFAULT CATEGORIES] Erro ao criar:', insertError);
+        } else {
+          console.log('✅ [DEFAULT CATEGORIES] Criadas com sucesso!');
+          categories = newCategories as Category[];
+        }
+      }
+
       console.log('✅ [FETCH DATA] Success:', {
-        categories: categoriesResult.data?.length || 0,
+        categories: categories.length,
         products: productsResult.data?.length || 0
       });
 
-      setCategories(categoriesResult.data as Category[] || []);
+      setCategories(categories);
       setProducts(productsResult.data as Product[] || []);
     } catch (error: any) {
       console.error('❌ [FETCH DATA] Error:', error);
