@@ -142,35 +142,65 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
       )}
 
       {/* Header com busca */}
-      <div className="sticky top-0 z-50 bg-[#1a1a1a]/95 backdrop-blur-xl border-b border-white/5">
-        <div className="px-5 py-4">
-          {/* Logo e voltar */}
-          <div className="flex items-center justify-between mb-4">
-            <button 
-              onClick={onExit}
-              className="p-2 hover:bg-white/5 rounded-xl transition-all active:scale-95"
-            >
-              <ArrowLeft size={24} />
-            </button>
+      <div className="bg-[#1a1a1a] border-b border-white/5">
+        <div className="px-5 pt-6 pb-4">
+          {/* Logo, Nome e Voltar */}
+          <div className="flex flex-col items-center mb-6">
+            <div className="w-full flex justify-between items-start mb-4">
+              <button 
+                onClick={onExit}
+                className="p-2 bg-[#2a2a2a] hover:bg-white/5 rounded-xl transition-all active:scale-95 shadow-lg"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              
+              {/* Badge de Status */}
+              <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg ${
+                effectiveIsOpen ? 'bg-green-500/20 text-green-500 border border-green-500/20' : 'bg-red-500/20 text-red-500 border border-red-500/20'
+              }`}>
+                {effectiveIsOpen ? '● Aberto agora' : '○ Fechado'}
+              </div>
+            </div>
+
+            {/* Foto do Restaurante Maior */}
+            <div className="relative mb-4">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl overflow-hidden border-4 border-[#2a2a2a] shadow-2xl bg-[#2a2a2a]">
+                {restaurant.logo ? (
+                  <img 
+                    src={restaurant.logo} 
+                    className="w-full h-full object-cover" 
+                    alt={restaurant.name} 
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <StoreIcon size={40} className="text-gray-600" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <h1 className="text-2xl font-black text-white text-center mb-2 tracking-tight">
+              {restaurant.name}
+            </h1>
             
-            {restaurant.logo && (
-              <img 
-                src={restaurant.logo} 
-                className="h-10 w-10 rounded-xl object-cover" 
-                alt={restaurant.name} 
-              />
+            {/* Endereço Completo */}
+            {restaurant.address && (
+              <div className="flex items-center text-gray-500 text-xs font-medium max-w-[250px] text-center leading-relaxed">
+                <MapPin size={12} className="mr-1.5 shrink-0 text-orange-500" />
+                <span>{restaurant.address}</span>
+              </div>
             )}
           </div>
 
           {/* Busca */}
-          <div className="relative">
+          <div className="relative sticky top-4 z-50">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
             <input
               type="text"
-              placeholder="Search your favourites..."
+              placeholder="O que você deseja comer hoje?"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-12 py-3.5 bg-[#2a2a2a] rounded-2xl text-white placeholder:text-gray-500 outline-none border border-white/5 focus:border-white/10 transition-all"
+              className="w-full pl-12 pr-12 py-4 bg-[#2a2a2a] rounded-2xl text-white placeholder:text-gray-500 outline-none border border-white/5 focus:border-orange-500/50 transition-all shadow-xl"
             />
             {searchTerm && (
               <button

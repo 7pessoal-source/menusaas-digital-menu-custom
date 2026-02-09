@@ -233,6 +233,29 @@ const RestaurantSettings: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </label>
+
+            {/* Switch de Aberto/Fechado */}
+            <div className="bg-[#1a1a1a] p-6 rounded-3xl border border-white/5 flex items-center justify-between">
+              <div>
+                <h4 className="text-white font-bold">Status do Estabelecimento</h4>
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.isOpen ? 'Seu restaurante está recebendo pedidos' : 'Seu restaurante está fechado no momento'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, isOpen: !formData.isOpen })}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${
+                  formData.isOpen ? 'bg-green-500' : 'bg-red-500'
+                }`}
+              >
+                <span
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                    formData.isOpen ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
           </div>
         </div>
       </div>
