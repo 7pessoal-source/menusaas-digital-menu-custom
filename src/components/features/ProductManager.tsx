@@ -448,12 +448,12 @@ const ProductManager: React.FC = () => {
               </div>
 
               {/* Variações (Templates) */}
-              <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
+              <div className="bg-white/5 border border-white/10 p-5 rounded-2xl mt-4">
                 <h3 className="text-sm font-bold text-gray-400 uppercase mb-4">Variações (Templates)</h3>
                 
                 {availableTemplates.length === 0 ? (
                   <p className="text-gray-500 text-xs">
-                    Nenhum template criado. Vá em "Templates" no menu lateral para criar.
+                    Nenhum template criado. Vá em "Variações" no menu lateral para criar.
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -495,7 +495,11 @@ const ProductManager: React.FC = () => {
             <div className="p-6 bg-[#2a2a2a] border-t border-white/10 flex space-x-3">
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setFormData({});
+                  setSelectedTemplates([]);
+                }}
                 className="flex-1 py-4 rounded-2xl font-bold text-gray-400 hover:bg-white/5 transition-colors"
               >
                 Cancelar
