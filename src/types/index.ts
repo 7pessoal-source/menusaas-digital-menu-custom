@@ -143,7 +143,7 @@ export interface CartItem {
 
 // View Types
 export type ViewType = 'landing' | 'auth' | 'admin' | 'menu';
-export type AdminTabType = 'menu' | 'inventory' | 'settings';
+export type AdminTabType = 'menu' | 'inventory' | 'settings' | 'templates';
 
 // Store Types
 export interface AppState {
@@ -180,4 +180,37 @@ export interface AuthState {
   setSession: (session: AuthSession | null) => void;
   setUser: (user: User | null) => void;
   signOut: () => void;
+}
+
+// ============================================
+// TEMPLATES GLOBAIS DE VARIAÇÃO
+// ============================================
+
+export interface VariationGroupTemplate {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  is_required: boolean;
+  allow_multiple: boolean;
+  display_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface VariationOptionTemplate {
+  id: string;
+  template_group_id: string;
+  name: string;
+  price_adjustment: number;
+  is_default: boolean;
+  display_order: number;
+  created_at?: string;
+}
+
+export interface ProductVariationAssignment {
+  id: string;
+  product_id: string;
+  template_group_id: string;
+  display_order: number;
+  created_at?: string;
 }

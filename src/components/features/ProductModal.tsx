@@ -57,51 +57,82 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const fetchProductData = async () => {
     setLoading(true);
 
-    // Buscar extras
-    const { data: extrasData } = await supabase
-      .from('product_extras')
-      .select('*')
-      .eq('product_id', product.id)
-      .eq('is_available', true)
-      .order('name');
-    
-    if (extrasData) setExtras(extrasData);
+    try {
+      // Buscar extras
+      const { data: extrasData } = await supabase
+        .from('product_extras')
+        .select('*')
+        .eq('product_id', product.id)
+        .eq('is_available', true)
+        .order('name');
+      
+      if (extrasData) setExtras(extrasData);
 
-    // Buscar grupos de variação
-    const { data: groupsData } = await supabase
-      .from('product_variation_groups')
-      .select('*')
-      .eq('product_id', product.id)
-      .order('display_order');
-    
-    if (groupsData) {
-      setVariationGroups(groupsData);
+      // NOVO: Buscar templates vinculados ao produto via assignments
+      const { data: assignmentsData } = await supabase
+        .from('product_variation_assignments')
+        .select(`
+          *,
+          variation_group_templates!inner (
+            *,
+            variation_option_templates (*)
+          )
+        `)
+        .eq('product_id', product.id)
+        .order('display_order');
       
-      // Buscar opções de cada grupo
-      const optionsMap: Record<string, ProductVariationOption[]> = {};
+      const allGroups: any[] = [];
+      const optionsMap: Record<string, any[]> = {};
       const defaultSelections: Record<string, string> = {};
+
+      if (assignmentsData && assignmentsData.length > 0) {
+        assignmentsData.forEach(a => {
+          const group = (a as any).variation_group_templates;
+          if (group) {
+            allGroups.push(group);
+            const opts = group.variation_option_templates || [];
+            optionsMap[group.id] = opts;
+            
+            const defaultOpt = opts.find((o: any) => o.is_default);
+            if (defaultOpt) {
+              defaultSelections[group.id] = defaultOpt.id;
+            }
+          }
+        });
+      }
+
+      // Buscar grupos de variação diretos (sistema antigo, se houver)
+      const { data: groupsData } = await supabase
+        .from('product_variation_groups')
+        .select('*')
+        .eq('product_id', product.id)
+        .order('display_order');
       
-      for (const group of groupsData) {
-        const { data: optionsData } = await supabase
-          .from('product_variation_options')
-          .select('*')
-          .eq('variation_group_id', group.id)
-          .eq('is_available', true)
-          .order('display_order');
-        
-        if (optionsData) {
-          optionsMap[group.id] = optionsData;
+      if (groupsData) {
+        for (const group of groupsData) {
+          allGroups.push(group);
+          const { data: optionsData } = await supabase
+            .from('product_variation_options')
+            .select('*')
+            .eq('variation_group_id', group.id)
+            .eq('is_available', true)
+            .order('display_order');
           
-          // Selecionar opção padrão automaticamente
-          const defaultOption = optionsData.find(opt => opt.is_default);
-          if (defaultOption) {
-            defaultSelections[group.id] = defaultOption.id;
+          if (optionsData) {
+            optionsMap[group.id] = optionsData;
+            const defaultOption = optionsData.find(opt => opt.is_default);
+            if (defaultOption) {
+              defaultSelections[group.id] = defaultOption.id;
+            }
           }
         }
       }
-      
+
+      setVariationGroups(allGroups);
       setVariationOptions(optionsMap);
       setSelectedVariations(defaultSelections);
+    } catch (err) {
+      console.error('Erro ao buscar dados do produto:', err);
     }
 
     setLoading(false);

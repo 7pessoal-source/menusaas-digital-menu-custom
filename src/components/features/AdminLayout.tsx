@@ -33,6 +33,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   const menuItems = [
     { id: 'menu', label: 'Cardápio', icon: UtensilsCrossed },
     { id: 'inventory', label: 'Categorias', icon: Package },
+    { id: 'templates', label: 'Templates', icon: Package },
     { id: 'settings', label: 'Configurações', icon: Settings },
   ];
 

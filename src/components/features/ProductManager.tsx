@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRestaurantStore } from '../../stores/restaurantStore';
 import { useProducts } from '../../hooks/useProducts';
-import { Product } from '../../types';
+import { Product, VariationGroupTemplate } from '../../types';
 import { 
   PlusCircle, 
   Edit2, 
@@ -23,7 +23,45 @@ const ProductManager: React.FC = () => {
   const [formData, setFormData] = useState<Partial<Product>>({});
   const [selectedProductForExtras, setSelectedProductForExtras] = useState<Product | null>(null);
   const [selectedProductForVariations, setSelectedProductForVariations] = useState<Product | null>(null); // NOVO!
+  const [availableTemplates, setAvailableTemplates] = useState<VariationGroupTemplate[]>([]);
+  const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
   const productImageRef = useRef<HTMLInputElement>(null);
+
+  // Buscar templates ao carregar
+  useEffect(() => {
+    if (!currentRestaurant) return;
+    const fetchTemplates = async () => {
+      const { data } = await supabase
+        .from('variation_group_templates')
+        .select('*, variation_option_templates(*)')
+        .eq('restaurant_id', currentRestaurant.id)
+        .order('display_order');
+      
+      if (data) setAvailableTemplates(data);
+    };
+    
+    fetchTemplates();
+  }, [currentRestaurant]);
+
+  // Se editando produto, buscar templates já vinculados
+  useEffect(() => {
+    if (formData.id) {
+      const fetchAssignments = async () => {
+        const { data } = await supabase
+          .from('product_variation_assignments')
+          .select('template_group_id')
+          .eq('product_id', formData.id);
+        
+        if (data) {
+          setSelectedTemplates(data.map(a => a.template_group_id));
+        }
+      };
+      
+      fetchAssignments();
+    } else {
+      setSelectedTemplates([]);
+    }
+  }, [formData.id]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -135,9 +173,30 @@ const ProductManager: React.FC = () => {
     
     const result = await saveProduct(formData as any);
     
-    if (result.success) {
+    if (result.success && (result as any).data) {
+      const productId = (result as any).data.id;
+      // Deletar assignments antigos
+      await supabase
+        .from('product_variation_assignments')
+        .delete()
+        .eq('product_id', productId);
+      
+      // Inserir novos
+      if (selectedTemplates.length > 0) {
+        const assignments = selectedTemplates.map((templateId, index) => ({
+          product_id: productId,
+          template_group_id: templateId,
+          display_order: index
+        }));
+        
+        await supabase
+          .from('product_variation_assignments')
+          .insert(assignments);
+      }
+
       setIsModalOpen(false);
       setFormData({});
+      setSelectedTemplates([]);
     }
   };
 
@@ -384,6 +443,50 @@ const ProductManager: React.FC = () => {
                   </div>
                   <span className="ml-3 text-xs font-bold text-gray-400 uppercase group-hover:text-white transition-colors">Promoção</span>
                 </label>
+              </div>
+
+              {/* Variações (Templates) */}
+              <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
+                <h3 className="text-sm font-bold text-gray-400 uppercase mb-4">Variações (Templates)</h3>
+                
+                {availableTemplates.length === 0 ? (
+                  <p className="text-gray-500 text-xs">
+                    Nenhum template criado. Vá em "Templates" no menu lateral para criar.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {availableTemplates.map(template => (
+                      <label 
+                        key={template.id}
+                        className="flex items-center gap-3 p-3 bg-black/30 rounded-xl border border-white/10 hover:border-white/20 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedTemplates.includes(template.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTemplates([...selectedTemplates, template.id]);
+                            } else {
+                              setSelectedTemplates(selectedTemplates.filter(id => id !== template.id));
+                            }
+                          }}
+                          className="w-5 h-5 rounded border-gray-700 text-orange-500"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-semibold text-white">{template.name}</span>
+                          <span className="text-[10px] text-gray-500 ml-2 uppercase">
+                            ({(template as any).variation_option_templates?.length || 0} opções)
+                          </span>
+                        </div>
+                        {template.is_required && (
+                          <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-bold uppercase">
+                            Obrigatório
+                          </span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

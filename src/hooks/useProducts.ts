@@ -65,7 +65,8 @@ export const useProducts = () => {
       }
 
       closeProductModal();
-      return { success: true };
+      const savedProduct = data.id ? productData : (await supabase.from('products').select().eq('restaurant_id', currentRestaurant.id).order('created_at', { ascending: false }).limit(1).single()).data;
+      return { success: true, data: savedProduct };
     } catch (error: any) {
       console.error('Save product error:', error);
       setError(error.message);
