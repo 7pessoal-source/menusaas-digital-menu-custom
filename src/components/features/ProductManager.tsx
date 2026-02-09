@@ -27,21 +27,23 @@ const ProductManager: React.FC = () => {
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
   const productImageRef = useRef<HTMLInputElement>(null);
 
-  // Buscar templates ao carregar
-  useEffect(() => {
+  // Buscar templates ao carregar e sempre que o modal abrir
+  const fetchTemplates = async () => {
     if (!currentRestaurant) return;
-    const fetchTemplates = async () => {
-      const { data } = await supabase
-        .from('variation_group_templates')
-        .select('*, variation_option_templates(*)')
-        .eq('restaurant_id', currentRestaurant.id)
-        .order('display_order');
-      
-      if (data) setAvailableTemplates(data);
-    };
+    const { data } = await supabase
+      .from('variation_group_templates')
+      .select('*, variation_option_templates(*)')
+      .eq('restaurant_id', currentRestaurant.id)
+      .order('display_order');
     
-    fetchTemplates();
-  }, [currentRestaurant]);
+    if (data) setAvailableTemplates(data);
+  };
+
+  useEffect(() => {
+    if (isModalOpen) {
+      fetchTemplates();
+    }
+  }, [isModalOpen, currentRestaurant]);
 
   // Se editando produto, buscar templates já vinculados
   useEffect(() => {

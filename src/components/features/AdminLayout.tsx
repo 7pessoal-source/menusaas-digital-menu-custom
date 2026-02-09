@@ -8,7 +8,8 @@ import {
   X,
   Package,
   Copy,
-  Check
+  Check,
+  Layers
 } from 'lucide-react';
 import { Restaurant, AdminTabType } from '../../types';
 
@@ -33,7 +34,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   const menuItems = [
     { id: 'menu', label: 'Cardápio', icon: UtensilsCrossed },
     { id: 'inventory', label: 'Categorias', icon: Package },
-    { id: 'templates', label: 'Templates', icon: Package },
+    { id: 'templates', label: 'Variações', icon: Layers },
     { id: 'settings', label: 'Configurações', icon: Settings },
   ];
 
