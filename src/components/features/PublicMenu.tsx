@@ -15,7 +15,8 @@ import {
   Flame,
   ShoppingBag
 } from 'lucide-react';
-import { Restaurant, Category, Product, OrderItem, CartItem } from '../../types';
+import { Restaurant, Category, Product, OrderItem, CartItem, Neighborhood } from '../../types';
+import { supabase } from '../../services/supabase';
 import { formatProductPrice } from '../../utils/priceRange';
 import ProductModal from './ProductModal';
 
@@ -44,6 +45,30 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'Cartão' | 'Pix' | 'Dinheiro' | ''>('');
+  const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState<Neighborhood | null>(null);
+
+  useEffect(() => {
+    if (restaurant.id) {
+      fetchNeighborhoods();
+    }
+  }, [restaurant.id]);
+
+  const fetchNeighborhoods = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('neighborhoods')
+        .select('*')
+        .eq('restaurant_id', restaurant.id)
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      setNeighborhoods(data || []);
+    } catch (err) {
+      console.error('Erro ao carregar bairros:', err);
+    }
+  };
 
   const effectiveIsOpen = Boolean(restaurant.isOpen);
   const allowsDelivery = Boolean(restaurant.allows_delivery);
@@ -65,7 +90,9 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
     console.log('Item adicionado ao carrinho:', item);
   };
 
-  const cartTotal: number = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const subtotal: number = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const deliveryFee: number = selectedNeighborhood?.delivery_fee || 0;
+  const cartTotal: number = subtotal + deliveryFee;
 
   const cartItemsCount: number = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -74,7 +101,10 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
   const isFormInvalid = () => {
     if (!customerName.trim()) return true;
     if (!paymentMethod) return true;
-    if (allowsDelivery && !customerAddress.trim()) return true;
+    if (allowsDelivery) {
+      if (!customerAddress.trim()) return true;
+      if (neighborhoods.length > 0 && !selectedNeighborhood) return true;
+    }
     return false;
   };
 
@@ -96,7 +126,9 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
     if (isFormInvalid() || isBelowMinOrder || !effectiveIsOpen) return;
 
     const serviceType = allowsDelivery ? '✅ ENTREGA EM CASA' : '✅ RETIRADA NO LOCAL';
-    const addressDetails = allowsDelivery ? `\n📍 *Endereço:* ${customerAddress}` : `\n📍 *Ponto de Retirada:* ${restaurant.address}`;
+    const neighborhoodText = selectedNeighborhood ? `\n🏘️ *Bairro:* ${selectedNeighborhood.name}` : '';
+    const deliveryFeeText = allowsDelivery ? `\n🚚 *Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}` : '';
+    const addressDetails = allowsDelivery ? `\n📍 *Endereço:* ${customerAddress}${neighborhoodText}` : `\n📍 *Ponto de Retirada:* ${restaurant.address}`;
 
     const itemsText = cartItems.map(item => {
       let text = `• ${item.quantity}x ${item.product.name}`;
@@ -120,7 +152,9 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
 
     const message = `*🍕 NOVO PEDIDO - ${restaurant.name}*\n\n` +
       `*Itens:*\n${itemsText}\n\n` +
-      `💰 *Total:* R$ ${cartTotal.toFixed(2)}\n\n` +
+      `💵 *Subtotal:* R$ ${subtotal.toFixed(2)}` +
+      `${deliveryFeeText}\n` +
+      `💰 *TOTAL:* R$ ${cartTotal.toFixed(2)}\n\n` +
       `*👤 Dados do Cliente:*\n` +
       `• Nome: ${customerName}\n` +
       `• Pagamento: ${paymentMethod}\n` +
@@ -479,15 +513,38 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                 />
                 
                 {allowsDelivery ? (
-                  <div className="relative">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" size={20} />
-                    <input 
-                      type="text" 
-                      placeholder="Endereço completo *" 
-                      className="w-full p-4 pl-12 bg-[#2a2a2a] rounded-2xl text-white placeholder:text-gray-500 outline-none border border-white/5 focus:border-white/10" 
-                      value={customerAddress} 
-                      onChange={(e) => setCustomerAddress(e.target.value)} 
-                    />
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" size={20} />
+                      <input 
+                        type="text" 
+                        placeholder="Endereço completo *" 
+                        className="w-full p-4 pl-12 bg-[#2a2a2a] rounded-2xl text-white placeholder:text-gray-500 outline-none border border-white/5 focus:border-white/10" 
+                        value={customerAddress} 
+                        onChange={(e) => setCustomerAddress(e.target.value)} 
+                      />
+                    </div>
+
+                    {neighborhoods.length > 0 && (
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase ml-1">Selecione seu Bairro *</label>
+                        <select
+                          className="w-full p-4 bg-[#2a2a2a] rounded-2xl text-white outline-none border border-white/5 focus:border-white/10 appearance-none cursor-pointer"
+                          value={selectedNeighborhood?.id || ''}
+                          onChange={(e) => {
+                            const neighborhood = neighborhoods.find(n => n.id === e.target.value);
+                            setSelectedNeighborhood(neighborhood || null);
+                          }}
+                        >
+                          <option value="">Escolha um bairro...</option>
+                          {neighborhoods.map(n => (
+                            <option key={n.id} value={n.id}>
+                              {n.name} - {n.delivery_fee === 0 ? 'Grátis' : `R$ ${n.delivery_fee.toFixed(2)}`}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="p-4 bg-orange-500/10 rounded-2xl border border-orange-500/20">
@@ -535,11 +592,27 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
 
             {/* Footer */}
             <div className="p-6 bg-[#2a2a2a] border-t border-white/10">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-400 text-sm font-semibold">Total</span>
-                <span className="text-3xl font-black text-orange-500">
-                  R$ {cartTotal.toFixed(2)}
-                </span>
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400 text-xs font-semibold uppercase">Subtotal</span>
+                  <span className="text-lg font-bold text-white">
+                    R$ {subtotal.toFixed(2)}
+                  </span>
+                </div>
+                {allowsDelivery && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 text-xs font-semibold uppercase">Taxa de Entrega</span>
+                    <span className="text-lg font-bold text-green-500">
+                      {selectedNeighborhood ? (deliveryFee === 0 ? 'Grátis' : `R$ ${deliveryFee.toFixed(2)}`) : 'Selecione o bairro'}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                  <span className="text-gray-400 text-sm font-black uppercase">Total</span>
+                  <span className="text-3xl font-black text-orange-500">
+                    R$ {cartTotal.toFixed(2)}
+                  </span>
+                </div>
               </div>
               <button 
                 onClick={handleSubmitOrder} 

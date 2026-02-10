@@ -144,7 +144,7 @@ export interface CartItem {
 
 // View Types
 export type ViewType = 'landing' | 'auth' | 'admin' | 'menu';
-export type AdminTabType = 'menu' | 'inventory' | 'settings' | 'templates';
+export type AdminTabType = 'menu' | 'inventory' | 'settings' | 'templates' | 'neighborhoods';
 
 // Store Types
 export interface AppState {
@@ -215,4 +215,14 @@ export interface ProductVariationAssignment {
   template_group_id: string;
   display_order: number;
   created_at?: string;
+}
+
+export interface Neighborhood {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  delivery_fee: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }

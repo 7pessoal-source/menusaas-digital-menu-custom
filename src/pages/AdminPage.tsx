@@ -9,6 +9,7 @@ import ProductManager from '../components/features/ProductManager';
 import CategoryManager from '../components/features/CategoryManager';
 import RestaurantSettings from '../components/features/RestaurantSettings';
 import VariationTemplatesManager from '../components/features/VariationTemplatesManager';
+import NeighborhoodManager from '../components/features/NeighborhoodManager';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ const AdminPage: React.FC = () => {
       {activeAdminTab === 'menu' && <ProductManager />}
       {activeAdminTab === 'inventory' && <CategoryManager />}
       {activeAdminTab === 'templates' && <VariationTemplatesManager restaurantId={currentRestaurant.id} />}
+      {activeAdminTab === 'neighborhoods' && <NeighborhoodManager restaurantId={currentRestaurant.id} />}
       {activeAdminTab === 'settings' && <RestaurantSettings />}
     </AdminLayout>
   );
