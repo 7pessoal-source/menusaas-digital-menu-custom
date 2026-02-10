@@ -27,7 +27,8 @@ const VariationTemplatesManager: React.FC<Props> = ({ restaurantId }) => {
   const [newTemplate, setNewTemplate] = useState({
     name: '',
     is_required: true,
-    allow_multiple: false
+    allow_multiple: false,
+    max_selections: 1  // NOVO
   });
 
   const [newOption, setNewOption] = useState<Record<string, {
@@ -102,11 +103,12 @@ const VariationTemplatesManager: React.FC<Props> = ({ restaurantId }) => {
         name: newTemplate.name,
         is_required: newTemplate.is_required,
         allow_multiple: newTemplate.allow_multiple,
+        max_selections: newTemplate.max_selections,  // NOVO
         display_order: templates.length
       });
 
     if (!error) {
-      setNewTemplate({ name: '', is_required: true, allow_multiple: false });
+      setNewTemplate({ name: '', is_required: true, allow_multiple: false, max_selections: 1 });
       await fetchTemplates();
     } else {
       console.error('Erro ao criar template:', error);
@@ -231,6 +233,40 @@ const VariationTemplatesManager: React.FC<Props> = ({ restaurantId }) => {
                 </label>
               </div>
 
+              {/* NOVO CAMPO: Quantidade de seleções */}
+              {newTemplate.allow_multiple && (
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 space-y-3">
+                  <label className="text-[10px] font-black text-blue-400 uppercase block">
+                    Quantas opções o cliente pode escolher?
+                  </label>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={newTemplate.max_selections}
+                      onChange={(e) => setNewTemplate({ 
+                        ...newTemplate, 
+                        max_selections: parseInt(e.target.value) || 1 
+                      })}
+                      className="w-20 p-3 bg-black/50 border border-blue-500/30 rounded-xl text-white font-bold text-center outline-none focus:border-blue-400"
+                    />
+                    <div className="flex-1">
+                      <p className="text-[10px] text-gray-300 font-medium">
+                        {newTemplate.max_selections === 2 && '🍕 Ex: Pizza Meia-Meia (2 sabores)'}
+                        {newTemplate.max_selections === 3 && '🍕 Ex: Pizza 3 Sabores'}
+                        {newTemplate.max_selections === 4 && '🍕 Ex: Pizza 4 Sabores'}
+                        {newTemplate.max_selections > 4 && `📝 Cliente escolhe ${newTemplate.max_selections} opções`}
+                        {newTemplate.max_selections === 1 && '✅ Escolha única (padrão)'}
+                      </p>
+                      <p className="text-[9px] text-gray-500 mt-1">
+                        Cliente pode escolher o mesmo sabor repetido
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={handleAddTemplate}
                 disabled={loading}
@@ -281,7 +317,7 @@ const VariationTemplatesManager: React.FC<Props> = ({ restaurantId }) => {
                         )}
                         {template.allow_multiple && (
                           <span className="text-[9px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-black uppercase">
-                            Multi-Seleção
+                            Escolher {template.max_selections || 1}
                           </span>
                         )}
                         <span className="text-[9px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full font-black uppercase">

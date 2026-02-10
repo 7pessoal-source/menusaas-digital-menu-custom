@@ -193,6 +193,7 @@ export interface VariationGroupTemplate {
   name: string;
   is_required: boolean;
   allow_multiple: boolean;
+  max_selections: number; // NOVO: Quantas opções podem ser escolhidas
   display_order: number;
   created_at?: string;
   updated_at?: string;
