@@ -122,7 +122,7 @@ const RestaurantSettings: React.FC = () => {
         {/* Coluna da Esquerda: Logo e Cores */}
         <div className="md:col-span-1 space-y-6">
           <div className="bg-[#2a2a2a] p-6 rounded-3xl border border-white/5 shadow-sm">
-            <span className="text-xs font-bold text-gray-400 uppercase block mb-4">Logo do Restaurante</span>
+            <span className="text-xs font-bold text-gray-400 uppercase block mb-4">Sua Logo Aqui</span>
             <div
               className="relative aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-white/10 flex items-center justify-center bg-[#1a1a1a] group cursor-pointer"
               onClick={() => logoInputRef.current?.click()}

@@ -182,6 +182,13 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
             <h1 className="text-2xl font-black text-white text-center mb-2 tracking-tight">
               {restaurant.name}
             </h1>
+
+            {/* Slogan / Descrição */}
+            {restaurant.description && (
+              <p className="text-gray-400 text-sm font-medium text-center mb-2 max-w-[280px] leading-relaxed">
+                {restaurant.description}
+              </p>
+            )}
             
             {/* Endereço Completo */}
             {restaurant.address && (
