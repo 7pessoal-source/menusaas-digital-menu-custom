@@ -39,7 +39,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
   // Variações
   const [variationGroups, setVariationGroups] = useState<ProductVariationGroup[]>([]);
   const [variationOptions, setVariationOptions] = useState<Record<string, ProductVariationOption[]>>({});
-  const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
+  const [selectedVariations, setSelectedVariations] = useState<Record<string, string[]>>({});
   
   const [loading, setLoading] = useState(true);
 
@@ -83,7 +83,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
       
       const allGroups: any[] = [];
       const optionsMap: Record<string, any[]> = {};
-      const defaultSelections: Record<string, string> = {};
+      const defaultSelections: Record<string, string[]> = {};
 
       if (assignmentsData && assignmentsData.length > 0) {
         assignmentsData.forEach(a => {
@@ -94,8 +94,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
             optionsMap[group.id] = opts;
             
             const defaultOpt = opts.find((o: any) => o.is_default);
-            if (defaultOpt) {
-              defaultSelections[group.id] = defaultOpt.id;
+            if (defaultOpt && !group.allow_multiple) {
+              defaultSelections[group.id] = [defaultOpt.id];
+            } else if (group.allow_multiple) {
+              defaultSelections[group.id] = [];
             }
           }
         });
@@ -121,8 +123,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
           if (optionsData) {
             optionsMap[group.id] = optionsData;
             const defaultOption = optionsData.find(opt => opt.is_default);
-            if (defaultOption) {
-              defaultSelections[group.id] = defaultOption.id;
+            if (defaultOption && !group.allow_multiple) {
+              defaultSelections[group.id] = [defaultOption.id];
+            } else if (group.allow_multiple) {
+              defaultSelections[group.id] = [];
             }
           }
         }
@@ -149,7 +153,36 @@ const ProductModal: React.FC<ProductModalProps> = ({
   };
 
   const handleVariationChange = (groupId: string, optionId: string) => {
-    setSelectedVariations({ ...selectedVariations, [groupId]: optionId });
+    const group = variationGroups.find(g => g.id === groupId);
+    
+    if (!group) return;
+
+    if (!group.allow_multiple) {
+      // Seleção única (radio button)
+      setSelectedVariations({ ...selectedVariations, [groupId]: [optionId] });
+    } else {
+      // Múltiplas seleções (checkbox)
+      const currentSelections = selectedVariations[groupId] || [];
+      const maxSelections = group.max_selections || 1;
+      
+      if (currentSelections.includes(optionId)) {
+        // Remove se já está selecionado
+        setSelectedVariations({
+          ...selectedVariations,
+          [groupId]: currentSelections.filter(id => id !== optionId)
+        });
+      } else {
+        // Adiciona se não atingiu o limite
+        if (currentSelections.length < maxSelections) {
+          setSelectedVariations({
+            ...selectedVariations,
+            [groupId]: [...currentSelections, optionId]
+          });
+        } else {
+          alert(`Você pode escolher no máximo ${maxSelections} ${maxSelections === 1 ? 'sabor' : 'sabores'}`);
+        }
+      }
+    }
   };
 
   const calculateTotalPrice = () => {
@@ -163,21 +196,31 @@ const ProductModal: React.FC<ProductModalProps> = ({
     });
     
     // Somar ajustes de variações
-    Object.entries(selectedVariations).forEach(([groupId, optionId]) => {
-      const option = variationOptions[groupId]?.find(opt => opt.id === optionId);
-      if (option) {
-        total += option.price_adjustment;
-      }
+    Object.entries(selectedVariations).forEach(([groupId, optionIds]) => {
+      optionIds.forEach(optionId => {
+        const option = variationOptions[groupId]?.find(opt => opt.id === optionId);
+        if (option) {
+          total += option.price_adjustment;
+        }
+      });
     });
     
     return total * quantity;
   };
 
   const canAddToCart = () => {
-    // Verificar se todos os grupos obrigatórios têm seleção
     return variationGroups.every(group => {
       if (group.is_required) {
-        return selectedVariations[group.id] !== undefined;
+        const selections = selectedVariations[group.id] || [];
+        
+        if (group.allow_multiple) {
+          // Para multi-seleção, deve ter EXATAMENTE max_selections
+          const maxSelections = group.max_selections || 1;
+          return selections.length === maxSelections;
+        } else {
+          // Para seleção única, deve ter pelo menos 1
+          return selections.length === 1;
+        }
       }
       return true;
     });
@@ -191,20 +234,23 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
     const selectedExtrasArray = extras.filter(extra => selectedExtras.has(extra.id));
     
-    const selectedVariationsArray: SelectedVariation[] = Object.entries(selectedVariations).map(
-      ([groupId, optionId]) => {
-        const group = variationGroups.find(g => g.id === groupId);
+    const selectedVariationsArray: SelectedVariation[] = [];
+    
+    Object.entries(selectedVariations).forEach(([groupId, optionIds]) => {
+      const group = variationGroups.find(g => g.id === groupId);
+      
+      optionIds.forEach(optionId => {
         const option = variationOptions[groupId]?.find(opt => opt.id === optionId);
         
-        return {
+        selectedVariationsArray.push({
           group_id: groupId,
           group_name: group?.name || '',
           option_id: optionId,
           option_name: option?.name || '',
           price_adjustment: option?.price_adjustment || 0
-        };
-      }
-    );
+        });
+      });
+    });
     
     onAddToCart({
       product,
@@ -279,7 +325,14 @@ const ProductModal: React.FC<ProductModalProps> = ({
               {variationGroups.map((group) => (
                 <div key={group.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-white">{group.name}</h3>
+                    <h3 className="font-bold text-white">
+                      {group.name}
+                      {group.allow_multiple && group.max_selections && (
+                        <span className="ml-2 text-sm font-normal text-gray-400">
+                          (Escolha {group.max_selections})
+                        </span>
+                      )}
+                    </h3>
                     {group.is_required && (
                       <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded-full">
                         Obrigatório
@@ -288,116 +341,160 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   </div>
 
                   <div className="space-y-2">
-                    {variationOptions[group.id]?.map((option) => (
-                      <label
-                        key={option.id}
-                        className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                          selectedVariations[group.id] === option.id
-                            ? 'border-orange-500 bg-orange-500/10'
-                            : 'border-gray-800 bg-black/50 hover:border-gray-700'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <input
-                            type="radio"
-                            name={`variation-${group.id}`}
-                            checked={selectedVariations[group.id] === option.id}
-                            onChange={() => handleVariationChange(group.id, option.id)}
-                            className="w-5 h-5 text-orange-500"
-                          />
-                          <span className="text-white font-bold">{option.name}</span>
-                        </div>
-                        <span className="text-orange-400 font-black">
-                          {option.price_adjustment >= 0 ? '+' : ''}
-                          R$ {option.price_adjustment.toFixed(2)}
-                        </span>
-                      </label>
-                    ))}
+                    {variationOptions[group.id]?.map((option) => {
+                      const isSelected = (selectedVariations[group.id] || []).includes(option.id);
+                      const currentCount = (selectedVariations[group.id] || []).length;
+                      const maxSelections = group.max_selections || 1;
+                      
+                      return (
+                        <label
+                          key={option.id}
+                          className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                            isSelected
+                              ? 'border-orange-500 bg-orange-500/10'
+                              : 'border-gray-800 bg-black/50 hover:border-gray-700'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <input
+                              type={group.allow_multiple ? "checkbox" : "radio"}
+                              name={`variation-${group.id}`}
+                              checked={isSelected}
+                              onChange={() => handleVariationChange(group.id, option.id)}
+                              className="w-5 h-5 text-orange-500"
+                            />
+                            <div>
+                              <span className="text-white font-bold">{option.name}</span>
+                              {group.allow_multiple && isSelected && (
+                                <span className="ml-2 text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-black">
+                                  ✓
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-orange-400 font-black">
+                            {option.price_adjustment >= 0 ? '+' : ''}
+                            R$ {option.price_adjustment.toFixed(2)}
+                          </span>
+                        </label>
+                      );
+                    })}
+                    
+                    {/* Contador de seleções */}
+                    {group.allow_multiple && (
+                      <div className="mt-3 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                        <p className="text-xs font-bold text-center">
+                          {((selectedVariations[group.id] || []).length) === (group.max_selections || 1) ? (
+                            <span className="text-green-400">
+                              ✓ {(group.max_selections || 1)} {(group.max_selections || 1) === 1 ? 'sabor escolhido' : 'sabores escolhidos'}
+                            </span>
+                          ) : (
+                            <span className="text-blue-400">
+                              {((selectedVariations[group.id] || []).length)} de {(group.max_selections || 1)} {(group.max_selections || 1) === 1 ? 'sabor escolhido' : 'sabores escolhidos'}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* ========== EXTRAS ========== */}
+          {/* ========== ADICIONAIS ========== */}
           {extras.length > 0 && (
-            <div>
-              <h3 className="text-lg font-bold text-white mb-3">Adicionais</h3>
-              <div className="space-y-2">
+            <div className="space-y-4">
+              <h3 className="text-lg font-black text-white flex items-center">
+                Adicionais
+                <span className="ml-2 text-xs font-normal text-gray-400 uppercase tracking-widest">
+                  Opcional
+                </span>
+              </h3>
+              
+              <div className="grid grid-cols-1 gap-3">
                 {extras.map((extra) => (
-                  <label
+                  <button
                     key={extra.id}
-                    className={`w-full p-4 rounded-2xl border-2 transition-all text-left flex items-center justify-between cursor-pointer ${
+                    onClick={() => toggleExtra(extra.id)}
+                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
                       selectedExtras.has(extra.id)
-                        ? 'border-amber-400 bg-amber-400/10'
+                        ? 'border-orange-500 bg-orange-500/10'
                         : 'border-gray-800 bg-black/50 hover:border-gray-700'
                     }`}
                   >
-                    <div>
-                      <p className="font-bold text-white">{extra.name}</p>
-                      <p className="text-sm text-amber-400">
-                        + R$ {extra.price.toFixed(2)}
-                      </p>
-                    </div>
                     <div className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedExtras.has(extra.id)}
-                        onChange={() => toggleExtra(extra.id)}
-                        className="w-6 h-6 rounded-full border-2 border-gray-600 text-amber-400 focus:ring-amber-400 bg-transparent"
-                      />
+                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                        selectedExtras.has(extra.id)
+                          ? 'bg-orange-500 border-orange-500'
+                          : 'border-gray-700'
+                      }`}>
+                        {selectedExtras.has(extra.id) && <Plus size={16} className="text-white" />}
+                      </div>
+                      <span className="text-white font-bold">{extra.name}</span>
                     </div>
-                  </label>
+                    <span className="text-orange-400 font-black">
+                      + R$ {extra.price.toFixed(2)}
+                    </span>
+                  </button>
                 ))}
               </div>
             </div>
           )}
 
           {/* Observações */}
-          {product.allows_observations !== false && (
-            <div>
-              <label className="text-sm font-bold text-gray-400 uppercase block mb-2">
-                Observações (opcional)
-              </label>
-              <textarea
-                value={observations}
-                onChange={(e) => setObservations(e.target.value)}
-                placeholder="Ex: Sem cebola, ponto da carne bem passado..."
-                className="w-full p-4 bg-black border border-gray-800 rounded-2xl text-white resize-none h-24 outline-none focus:border-amber-400 transition-all"
-              />
-            </div>
-          )}
+          <div className="space-y-3">
+            <h3 className="text-lg font-black text-white">Alguma observação?</h3>
+            <textarea
+              value={observations}
+              onChange={(e) => setObservations(e.target.value)}
+              placeholder="Ex: Tirar cebola, maionese à parte..."
+              className="w-full h-32 bg-black/50 border-2 border-gray-800 rounded-2xl p-4 text-white placeholder-gray-600 outline-none focus:border-orange-500 transition-all resize-none"
+            />
+          </div>
+        </div>
 
-          {/* Quantidade */}
-          <div className="flex items-center justify-between bg-black/50 p-4 rounded-2xl border border-gray-800">
-            <span className="font-bold text-white">Quantidade</span>
-            <div className="flex items-center space-x-4">
+        {/* Footer com Quantidade e Botão */}
+        <div className="sticky bottom-0 bg-[#1a1a1a] border-t border-white/10 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center bg-black/50 rounded-2xl p-1 border-2 border-gray-800">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-all"
+                className="w-12 h-12 flex items-center justify-center text-white hover:text-orange-500 transition-colors"
               >
-                <Minus size={18} className="text-white" />
+                <Minus size={20} />
               </button>
-              <span className="text-2xl font-black text-white w-8 text-center">
+              <span className="w-12 text-center text-xl font-black text-white">
                 {quantity}
               </span>
               <button
                 onClick={() => setQuantity(quantity + 1)}
-                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-all"
+                className="w-12 h-12 flex items-center justify-center text-white hover:text-orange-500 transition-colors"
               >
-                <Plus size={18} className="text-white" />
+                <Plus size={20} />
               </button>
+            </div>
+            
+            <div className="text-right">
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">
+                Total do Item
+              </p>
+              <p className="text-3xl font-black text-white">
+                R$ {totalPrice.toFixed(2)}
+              </p>
             </div>
           </div>
 
-          {/* Botão Adicionar */}
           <button
             onClick={handleAddToCart}
-            disabled={!canAddToCart()}
-            className="w-full bg-amber-400 text-black p-5 rounded-2xl font-black text-lg flex items-center justify-center space-x-3 hover:bg-amber-300 transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`w-full h-16 rounded-2xl font-black text-lg flex items-center justify-center space-x-3 transition-all ${
+              canAddToCart()
+                ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20'
+                : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+            }`}
           >
             <ShoppingCart size={24} />
-            <span>Adicionar • R$ {totalPrice.toFixed(2)}</span>
+            <span>Adicionar ao Carrinho</span>
           </button>
         </div>
       </div>

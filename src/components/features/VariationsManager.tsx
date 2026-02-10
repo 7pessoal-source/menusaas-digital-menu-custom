@@ -30,7 +30,8 @@ const VariationsManager: React.FC<VariationsManagerProps> = ({ product, onClose 
   const [newGroup, setNewGroup] = useState({
     name: '',
     is_required: true,
-    allow_multiple: false
+    allow_multiple: false,
+    max_selections: 1  // NOVO
   });
 
   // Formulário para nova opção
@@ -87,11 +88,12 @@ const VariationsManager: React.FC<VariationsManagerProps> = ({ product, onClose 
         name: newGroup.name,
         is_required: newGroup.is_required,
         allow_multiple: newGroup.allow_multiple,
+        max_selections: newGroup.max_selections,  // NOVO
         display_order: groups.length
       });
 
     if (!error) {
-      setNewGroup({ name: '', is_required: true, allow_multiple: false });
+      setNewGroup({ name: '', is_required: true, allow_multiple: false, max_selections: 1 });
       await fetchVariations();
       await updateProductPriceRange(product.id, product.price);
     }
@@ -219,6 +221,40 @@ const VariationsManager: React.FC<VariationsManagerProps> = ({ product, onClose 
               </label>
             </div>
 
+            {/* NOVO CAMPO: Quantidade de seleções */}
+            {newGroup.allow_multiple && (
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 space-y-3">
+                <label className="text-xs font-bold text-blue-400 uppercase block">
+                  Quantas opções o cliente pode escolher?
+                </label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={newGroup.max_selections}
+                    onChange={(e) => setNewGroup({ 
+                      ...newGroup, 
+                      max_selections: parseInt(e.target.value) || 1 
+                    })}
+                    className="w-20 p-3 bg-black/50 border border-blue-500/30 rounded-lg text-white font-bold text-center outline-none focus:border-blue-400"
+                  />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-300 font-medium">
+                      {newGroup.max_selections === 2 && '🍕 Ex: Pizza Meia-Meia (2 sabores)'}
+                      {newGroup.max_selections === 3 && '🍕 Ex: Pizza 3 Sabores'}
+                      {newGroup.max_selections === 4 && '🍕 Ex: Pizza 4 Sabores'}
+                      {newGroup.max_selections > 4 && `📝 Cliente escolhe ${newGroup.max_selections} opções`}
+                      {newGroup.max_selections === 1 && '✅ Escolha única (padrão)'}
+                    </p>
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      Cliente pode escolher o mesmo sabor repetido
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <button
               onClick={handleAddGroup}
               disabled={loading}
@@ -271,7 +307,7 @@ const VariationsManager: React.FC<VariationsManagerProps> = ({ product, onClose 
                         )}
                         {group.allow_multiple && (
                           <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
-                            Múltipla escolha
+                            Escolher {group.max_selections || 1}
                           </span>
                         )}
                         <span className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">
@@ -295,36 +331,49 @@ const VariationsManager: React.FC<VariationsManagerProps> = ({ product, onClose 
                     {/* Adicionar Nova Opção */}
                     <div className="bg-black/30 p-4 rounded-xl border border-gray-700">
                       <div className="grid grid-cols-12 gap-2">
-                        <input
-                          type="text"
-                          placeholder="Nome da opção (ex: Broto)"
-                          value={newOption[group.id]?.name || ''}
-                          onChange={(e) => setNewOption({
-                            ...newOption,
-                            [group.id]: {
-                              ...(newOption[group.id] || { price_adjustment: 0, is_default: false }),
-                              name: e.target.value
-                            }
-                          })}
-                          className="col-span-6 p-3 bg-black border border-gray-700 rounded-lg text-white text-sm outline-none focus:border-orange-400"
-                        />
-                        
-                        <input
-                          type="number"
-                          step="0.01"
-                          placeholder="+ R$"
-                          value={newOption[group.id]?.price_adjustment || 0}
-                          onChange={(e) => setNewOption({
-                            ...newOption,
-                            [group.id]: {
-                              ...(newOption[group.id] || { name: '', is_default: false }),
-                              price_adjustment: parseFloat(e.target.value) || 0
-                            }
-                          })}
-                          className="col-span-3 p-3 bg-black border border-gray-700 rounded-lg text-white text-sm outline-none focus:border-orange-400"
-                        />
-
-                        <label className="col-span-2 flex items-center justify-center space-x-2 cursor-pointer">
+                        <div className="col-span-6">
+                          <input
+                            type="text"
+                            placeholder="Nome da opção (ex: Broto)"
+                            value={newOption[group.id]?.name || ''}
+                            onChange={(e) => setNewOption({
+                              ...newOption,
+                              [group.id]: {
+                                ...(newOption[group.id] || { price_adjustment: 0, is_default: false }),
+                                name: e.target.value
+                              }
+                            })}
+                            className="w-full p-3 bg-black/50 border border-gray-700 rounded-lg text-white text-sm outline-none focus:border-orange-400"
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <input
+                            type="number"
+                            placeholder="Preço (+)"
+                            value={newOption[group.id]?.price_adjustment || 0}
+                            onChange={(e) => setNewOption({
+                              ...newOption,
+                              [group.id]: {
+                                ...(newOption[group.id] || { name: '', is_default: false }),
+                                price_adjustment: parseFloat(e.target.value) || 0
+                              }
+                            })}
+                            className="w-full p-3 bg-black/50 border border-gray-700 rounded-lg text-white text-sm outline-none focus:border-orange-400"
+                          />
+                        </div>
+                        <div className="col-span-3 flex items-center space-x-2">
+                          <button
+                            onClick={() => handleAddOption(group.id)}
+                            disabled={loading}
+                            className="w-full h-full bg-orange-500 text-white rounded-lg font-bold hover:bg-orange-600 transition-colors flex items-center justify-center"
+                          >
+                            <Plus size={18} />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 flex items-center space-x-4">
+                        <label className="flex items-center space-x-2 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={newOption[group.id]?.is_default || false}
@@ -335,48 +384,41 @@ const VariationsManager: React.FC<VariationsManagerProps> = ({ product, onClose 
                                 is_default: e.target.checked
                               }
                             })}
-                            className="w-4 h-4 rounded border-gray-700 text-orange-500"
+                            className="w-4 h-4 rounded border-gray-700 text-orange-500 focus:ring-orange-400"
                           />
-                          <span className="text-xs text-gray-400">Padrão</span>
+                          <span className="text-xs text-gray-400">Opção padrão</span>
                         </label>
-
-                        <button
-                          onClick={() => handleAddOption(group.id)}
-                          disabled={loading}
-                          className="col-span-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all flex items-center justify-center disabled:opacity-50"
-                        >
-                          <Plus size={16} />
-                        </button>
                       </div>
                     </div>
 
-                    {/* Lista de Opções */}
+                    {/* Lista de Opções Existentes */}
                     <div className="space-y-2">
                       {options[group.id]?.map((option) => (
                         <div
                           key={option.id}
-                          className="bg-black/30 p-3 rounded-xl border border-gray-700 flex items-center justify-between group hover:border-gray-600 transition-colors"
+                          className="flex items-center justify-between p-3 bg-black/20 border border-white/5 rounded-xl"
                         >
                           <div className="flex items-center space-x-3">
                             <GripVertical size={16} className="text-gray-600" />
                             <div>
-                              <p className="font-medium text-white">{option.name}</p>
-                              <div className="flex gap-2 mt-1">
-                                <span className="text-xs text-orange-400">
-                                  {option.price_adjustment >= 0 ? '+' : ''}R$ {option.price_adjustment.toFixed(2)}
-                                </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-white font-medium">{option.name}</span>
                                 {option.is_default && (
-                                  <span className="text-xs bg-green-500/20 text-green-400 px-2 rounded-full">
+                                  <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-full">
                                     Padrão
                                   </span>
                                 )}
                               </div>
+                              <span className="text-orange-400 text-xs font-bold">
+                                {option.price_adjustment >= 0 ? '+' : ''}
+                                R$ {option.price_adjustment.toFixed(2)}
+                              </span>
                             </div>
                           </div>
-                          
+
                           <button
                             onClick={() => handleDeleteOption(option.id, group.id)}
-                            className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400 transition-all p-2"
+                            className="text-gray-600 hover:text-red-500 transition-colors p-2"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -389,14 +431,6 @@ const VariationsManager: React.FC<VariationsManagerProps> = ({ product, onClose 
             ))
           )}
         </div>
-
-        {/* Botão Fechar */}
-        <button
-          onClick={onClose}
-          className="w-full mt-6 bg-gray-800 text-white p-4 rounded-2xl font-bold hover:bg-gray-700 transition-all"
-        >
-          Concluir
-        </button>
       </div>
     </div>
   );

@@ -100,9 +100,10 @@ export interface ProductExtra {
 export interface ProductVariationGroup {
   id: string;
   product_id: string;
-  name: string; // Ex: "Tamanho", "Borda"
+  name: string; // Ex: "Tamanho", "Borda", "Sabores"
   is_required: boolean; // Se o cliente DEVE escolher
   allow_multiple: boolean; // Permite múltiplas seleções
+  max_selections: number; // NOVO: Quantas opções podem ser escolhidas (ex: 2 para meia-meia)
   display_order: number;
   created_at?: string;
   updated_at?: string;
