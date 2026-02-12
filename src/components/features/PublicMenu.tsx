@@ -116,8 +116,14 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
       return matchesSearch && matchesCategory && p.is_available;
     })
     .sort((a, b) => {
+      // 1. Prioridade para itens fixados (is_pinned)
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+
+      // 2. Prioridade para promoções (is_promotion)
       if (a.is_promotion && !b.is_promotion) return -1;
       if (!a.is_promotion && b.is_promotion) return 1;
+
       return 0;
     });
 

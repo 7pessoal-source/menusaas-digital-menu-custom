@@ -10,7 +10,8 @@ import {
   Upload, 
   Star,
   Image as ImageIcon,
-  Settings 
+  Settings,
+  Pin 
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import ExtrasManager from './ExtrasManager';
@@ -218,6 +219,7 @@ const ProductManager: React.FC = () => {
               price: 0,
               is_available: true,
               is_promotion: false,
+              is_pinned: false,
               category_id: categories[0]?.id || '',
             });
             setIsModalOpen(true);
@@ -239,11 +241,18 @@ const ProductManager: React.FC = () => {
               key={p.id}
               className="bg-[#2a2a2a] rounded-3xl border border-white/5 overflow-hidden group shadow-sm hover:shadow-xl transition-all relative"
             >
-              {p.is_promotion && (
-                <div className="absolute top-4 left-4 z-10 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-black shadow-md flex items-center">
-                  <Star size={12} className="mr-1 fill-current" /> PROMO
-                </div>
-              )}
+              <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                {p.is_pinned && (
+                  <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-black shadow-md flex items-center">
+                    <Pin size={12} className="mr-1 fill-current" /> FIXADO
+                  </div>
+                )}
+                {p.is_promotion && (
+                  <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-black shadow-md flex items-center">
+                    <Star size={12} className="mr-1 fill-current" /> PROMO
+                  </div>
+                )}
+              </div>
               <div className="h-48 overflow-hidden relative bg-[#1a1a1a]">
                 {p.image ? (
                   <img
@@ -428,6 +437,22 @@ const ProductManager: React.FC = () => {
                     <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.is_available ? 'translate-x-4' : ''}`}></div>
                   </div>
                   <span className="ml-3 text-xs font-bold text-gray-400 uppercase group-hover:text-white transition-colors">Disponível</span>
+                </label>
+
+                <label className="flex items-center cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={formData.is_pinned}
+                      onChange={(e) =>
+                        setFormData({ ...formData, is_pinned: e.target.checked })
+                      }
+                    />
+                    <div className={`w-10 h-6 rounded-full transition-colors ${formData.is_pinned ? 'bg-blue-500' : 'bg-gray-700'}`}></div>
+                    <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.is_pinned ? 'translate-x-4' : ''}`}></div>
+                  </div>
+                  <span className="ml-3 text-xs font-bold text-gray-400 uppercase group-hover:text-white transition-colors">Fixar Topo</span>
                 </label>
 
                 <label className="flex items-center cursor-pointer group">

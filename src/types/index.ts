@@ -42,6 +42,7 @@ export interface Product {
   price_display_min?: number;
   price_display_max?: number;
   has_variations?: boolean;
+  is_pinned?: boolean;
   created_at?: string;
 }
 
