@@ -346,7 +346,7 @@ const PublicMenu: React.FC<PublicMenuProps> = ({
                             next.delete(product.id);
                             return next;
                           });
-                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%231a1a1a"/%3E%3C/svg%3E';
+                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%231a1a1a"/%3E%3C/svg%3E';
                         }}
                       />
                     </>
